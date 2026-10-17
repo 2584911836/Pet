@@ -202,15 +202,29 @@ static var texture_cache: Dictionary = {}
 
 static func draw_creature(canvas: CanvasItem, pos: Vector2, id: int, scale_factor: float, clock: float) -> void:
 	var texture := portrait(id)
-	var pixel := 3.0*scale_factor
+	var maximum := Vector2(100,100)*scale_factor
+	var factor := minf(maximum.x/texture.get_width(),maximum.y/texture.get_height())
+	var size := texture.get_size()*factor
 	var bob := roundf(sin(clock*2.8+id)*1.3)*scale_factor if clock != 0 else 0.0
-	canvas.draw_texture_rect(texture,Rect2(pos-Vector2(20,18)*pixel+Vector2(0,bob),Vector2(40,36)*pixel),false)
+	canvas.draw_texture_rect(texture,Rect2(pos-size*0.5+Vector2(0,bob),size),false)
 
-static func portrait(id: int) -> ImageTexture:
-	if not texture_cache.has(id): texture_cache[id] = ImageTexture.create_from_image(sprite_image(id))
+static func portrait(id: int) -> Texture2D:
+	if not texture_cache.has(id):
+		var species: Dictionary = preload("res://scripts/game_data.gd").SPECIES[id]
+		var form := int(species.form)
+		var family := int(species.family)
+		var atlas_data = preload("res://scripts/pet_atlases.gd")
+		if ResourceLoader.exists(atlas_data.SHEETS[form]):
+			var atlas := AtlasTexture.new()
+			atlas.atlas = load(atlas_data.SHEETS[form])
+			atlas.region = atlas_data.FRAMES[form][family]
+			atlas.filter_clip = true
+			texture_cache[id] = atlas
+		else:
+			texture_cache[id] = ImageTexture.create_from_image(procedural_image(id))
 	return texture_cache[id]
 
-static func sprite_image(id: int) -> Image:
+static func procedural_image(id: int) -> Image:
 	var species: Dictionary = preload("res://scripts/game_data.gd").SPECIES[id]
 	var family := int(species.family)
 	var form := int(species.form)
@@ -286,11 +300,21 @@ static func sprite_image(id: int) -> Image:
 		for k in range(4): image.fill_rect(Rect2i(9+k*6,6,2,2),accent)
 	return image
 
-static func hero_portrait() -> ImageTexture:
-	if texture_cache.has("hero"): return texture_cache.hero
+static func hero_portrait(detailed: bool = false, walk_frame: int = 0) -> Texture2D:
+	if detailed:
+		if not texture_cache.has("hero_detailed"): texture_cache.hero_detailed = load("res://assets/art/luoxi_portrait.png")
+		return texture_cache.hero_detailed
+	var key := "hero_"+str(walk_frame)
+	if texture_cache.has(key): return texture_cache[key]
 	var rows := [
 		"       nnnnnnn       ","     nnbbbbbbbnn     ","    nbbbbbbbbbbbn    ","    nbbbbbbbbbbbn    ","   nbbbbbggbbbbbbn   ","    nnnnnnnnnnnnn    ","      ssssssss       ","      sesseess       ","       ssssss        ","     wwwwwwwwww      ","    wWWWWWWWWWWw     ","   wWWWgWWWWWWWWw    ","  wWWWWggWWWWWWWWw   ","  wWWWWgWgWWWWWWWw   ","   wWWWgWWgWWWWWw    ","    wWWgWWWgWWWw     ","    wWWgWWWWgWWw     ","     wwggggggww      ","      nnbbbnn        ","      nnbbbnn        ","     nnn   nnn       "
 	]
+	if walk_frame == 1:
+		rows[19] = "      nnbbbnn        "
+		rows[20] = "    nnn    nn        "
+	elif walk_frame == 2:
+		rows[19] = "      nnbbbnn        "
+		rows[20] = "      nn    nnn      "
 	var colors := {"n":Color("243a50"),"b":Color("45617b"),"g":Color("d3af72"),"s":Color("edbf9e"),"e":Color("203445"),"w":Color("b0a48c"),"W":Color("eee4c8")}
 	var image := Image.create(40,40,false,Image.FORMAT_RGBA8)
 	image.fill(Color.TRANSPARENT)
@@ -298,5 +322,34 @@ static func hero_portrait() -> ImageTexture:
 		for x in range(rows[y].length()):
 			var c: String = rows[y].substr(x,1)
 			if colors.has(c): image.set_pixel(x+10,y+8,colors[c])
-	texture_cache.hero = ImageTexture.create_from_image(image)
-	return texture_cache.hero
+	texture_cache[key] = ImageTexture.create_from_image(image)
+	return texture_cache[key]
+
+static func sprite_image(id: int) -> Image:
+	# Small normalized previews for catalogue analysis, not altered source PNGs.
+	var texture := portrait(id)
+	var source: Image
+	if texture is AtlasTexture:
+		var sheet := (texture as AtlasTexture).atlas.get_image()
+		if sheet.is_compressed(): sheet.decompress()
+		source = sheet.get_region(Rect2i((texture as AtlasTexture).region))
+	else: source = texture.get_image()
+	var factor := minf(36.0/source.get_width(),32.0/source.get_height())
+	source.resize(maxi(1,int(source.get_width()*factor)),maxi(1,int(source.get_height()*factor)),Image.INTERPOLATE_NEAREST)
+	var result := Image.create(40,36,false,Image.FORMAT_RGBA8)
+	result.fill(Color.TRANSPARENT)
+	result.blit_rect(source,Rect2i(Vector2i.ZERO,source.get_size()),Vector2i(int((40-source.get_width())/2),int((36-source.get_height())/2)))
+	return result
+
+static func keeper_token() -> Texture2D:
+	if texture_cache.has("keeper_token"): return texture_cache.keeper_token
+	var rows := ["      wwwwww        ","    wwwwwwwwww      ","    wwssssssww      ","    wwsesse sww     ","     wssssssw       ","      ssssss        ","     tttttttt       ","    bbbtttbbbb      ","   bbbbttbbbbb      ","  gb bbttbbbbbb     ","  gg bbc cbbbbb     ","  gg bbc cbbbbb     ","     bbc cbbbbb     ","     bbc cbbbb      ","     bbc cbbbb      ","    bbbc cbbbbb     ","    bbbc cbbbbb     ","     bbbbbbbbb      ","      nn  nn        ","     nnn  nnn       "]
+	var colors := {"w":Color("d8ded9"),"s":Color("e6b994"),"e":Color("283b48"),"t":Color("6e9ca3"),"b":Color("344f69"),"c":Color("e7dbc1"),"g":Color("edbf6e"),"n":Color("4e4541")}
+	var image := Image.create(40,40,false,Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	for y in range(rows.size()):
+		for x in range(rows[y].length()):
+			var c: String = rows[y].substr(x,1)
+			if colors.has(c): image.set_pixel(x+10,y+8,colors[c])
+	texture_cache.keeper_token = ImageTexture.create_from_image(image)
+	return texture_cache.keeper_token

@@ -1,0 +1,30 @@
+[
+  {
+    "file": "title_archipelago.png",
+    "method": "AI image generation",
+    "generation_file": "exec-68a6d1bb-650a-43da-a697-a89aa2292f5c.png",
+    "source_pixels_modified": false,
+    "sha256": "dcb3d6145a9331b9477ea7e08974b1157d1b893c9c32cf47e008acce143166bc"
+  },
+  {
+    "file": "world_objects.png",
+    "method": "AI image generation",
+    "generation_file": "exec-f975418a-ba66-4e3e-b878-6bfbbb18cf04.png",
+    "source_pixels_modified": false,
+    "sha256": "d214b6e8a5a84eae5c86df6964b87e0fbaf47c0fcec4d4651de4e0419a579698"
+  },
+  {
+    "file": "luoxi_portrait.png",
+    "method": "AI image generation",
+    "generation_file": "exec-878607b4-014f-4b76-b165-7084a6fa09f3.png",
+    "source_pixels_modified": false,
+    "sha256": "a023e4c6f3cfb0c23d6ed44fb7ce81921eb6e6f42b1e6e53f617dbeb13b236db"
+  },
+  {
+    "file": "aran_portrait.png",
+    "method": "AI image generation",
+    "generation_file": "exec-891290bf-0884-4df0-a599-3e1685342b07.png",
+    "source_pixels_modified": false,
+    "sha256": "7c7857c3cb48cff9a3ca31a472f7159d3349ea1a13428d57db43ccb52b445259"
+  }
+]

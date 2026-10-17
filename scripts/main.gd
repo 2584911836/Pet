@@ -1,6 +1,7 @@
 extends Node2D
 
 const Data = preload("res://scripts/game_data.gd")
+const WorldArt = preload("res://scripts/world_art.gd")
 const Sound = preload("res://scripts/audio.gd")
 const SPECIES = Data.SPECIES
 const ISLANDS = Data.ISLANDS
@@ -14,11 +15,12 @@ var party: Array = []
 var reserve: Array = []
 var known: Array = [0]
 var active := 0
-var player := Vector2i(2, 5)
-var visual_player := Vector2(2,5)
+var player := Vector2i(2, 6)
+var visual_player := Vector2(2,6)
+var companion_target := Vector2(2,7)
+var companion_visual := Vector2(2,7)
 var steps_walked := 0
 var seconds_played := 0.0
-var tide_visual := 0.0
 var enemy: Dictionary = {}
 var mode := "explore"
 var seals := 8
@@ -26,6 +28,7 @@ var fragments := 0
 var wins := 0
 var guardian_defeated := false
 var collection_rewarded := false
+var keeper_rewards: Array = [false,false,false]
 var guardian_battle := false
 var guarding := false
 var message := "欢迎来到微光岛。WASD / 方向键移动；草丛中寻找灵兽。"
@@ -55,7 +58,6 @@ var animations_enabled := true
 var impact_left := 0.0
 var impact_enemy := true
 var floating_text := ""
-var particles: Array = []
 var buttons: VBoxContainer
 var info: Label
 var log_label: Label
@@ -77,6 +79,7 @@ func _ready() -> void:
 	build_ui()
 	load_settings()
 	load_game()
+	reset_visual_positions()
 	refresh()
 	audio.play_track("island_"+str(zone))
 	if not OS.get_cmdline_args().has("--skip-title"):
@@ -89,7 +92,7 @@ func build_ui() -> void:
 	title.add_theme_font_size_override("font_size", 29)
 	add_child(title)
 	var subtitle := Label.new()
-	subtitle.text = "微光群岛     •     原创怪物收集冒险     /     SHORT ADVENTURE 0.4"
+	subtitle.text = "微光群岛     •     原创怪物收集冒险     /     SHORT ADVENTURE 0.5"
 	subtitle.position = Vector2(42, 70)
 	subtitle.modulate = Color("9aafbb")
 	add_child(subtitle)
@@ -149,6 +152,7 @@ func refresh() -> void:
 	else:
 		add_button("在营地休息 [E]", rest)
 		add_button("营地编队 / 储备灵兽", show_roster)
+		add_button("与守灯人交谈 [R]", talk_keeper)
 		add_button("摇响潮铃 [T] / 改变潮相", change_tide)
 		add_button("守灯人档案", show_character)
 		add_button("群岛地图 / 9 个区域", show_world_map)
@@ -173,8 +177,8 @@ func discovered() -> int:
 func _process(delta: float) -> void:
 	if quitting: return
 	if modal == null: seconds_played += delta
+	companion_visual = companion_visual.lerp(companion_target,minf(1,delta*12)) if not reduce_motion else companion_target
 	visual_player = visual_player.lerp(Vector2(player),minf(1,delta*18)) if not reduce_motion else Vector2(player)
-	tide_visual = move_toward(tide_visual,float(tide),delta*3)
 	walk_time += delta
 	impact_left = maxf(0,impact_left-delta)
 	queue_redraw()
@@ -200,12 +204,16 @@ func is_grass(p: Vector2i) -> bool:
 
 func move_player(d: Vector2i) -> void:
 	var target := player + d
-	if target.x < 1 or target.x > 16 or target.y < 1 or target.y > 9: return
+	if not is_land(target): return
 	if target.x == 11 and tide == 1:
 		message = "海水淹没了浅滩。按 T 摇铃退潮，旧路就会显露。"
 		refresh()
 		return
-	if target in obstacle_tiles(): return
+	if target == Vector2i(3,4):
+		talk_keeper()
+		return
+	if target in obstacle_tiles() or target == Vector2i(2,5): return
+	companion_target = Vector2(player)
 	player = target
 	steps_walked += 1
 	if find_relic():
@@ -274,7 +282,7 @@ func turn(action: String) -> void:
 					audio.sfx("bell")
 					refresh()
 					await get_tree().create_timer(0.55).timeout
-					if capture_battle != battle_id: return
+					if quitting or capture_battle != battle_id: return
 					busy = false
 				if not known.has(int(enemy.species)): known.append(int(enemy.species))
 				if party.size() < 6: party.append(enemy.duplicate(true))
@@ -361,7 +369,10 @@ func enemy_turn() -> void:
 				refresh()
 				return
 		mode = "explore"
-		player = Vector2i(2, 5)
+		player = Vector2i(2, 6)
+		visual_player = Vector2(player)
+		companion_target = Vector2(player)+Vector2(0,1)
+		companion_visual = companion_target
 		heal_party()
 		audio.play_track("island_"+str(zone))
 		message = "队伍失去战斗能力。营地救援后已恢复，旅程可以继续。"
@@ -425,7 +436,7 @@ func save_game(notify: bool = true) -> void:
 		message = "存档失败：无法写入用户目录。"
 		refresh()
 		return
-	file.store_string(JSON.stringify({"version":2,"zone":zone,"area":area,"steps":steps_walked,"seconds":seconds_played,"completed":completed,"crystals":crystals,"tide":tide,"relics":relics,"collection_rewarded":collection_rewarded,"party":party,"reserve":reserve,"known":known,"active":active,"seals":seals,"fragments":fragments,"wins":wins,"guardian":guardian_defeated,"x":player.x,"y":player.y}))
+	file.store_string(JSON.stringify({"version":2,"zone":zone,"area":area,"steps":steps_walked,"seconds":seconds_played,"completed":completed,"crystals":crystals,"tide":tide,"relics":relics,"collection_rewarded":collection_rewarded,"keeper_rewards":keeper_rewards,"party":party,"reserve":reserve,"known":known,"active":active,"seals":seals,"fragments":fragments,"wins":wins,"guardian":guardian_defeated,"x":player.x,"y":player.y}))
 	file.close()
 	if FileAccess.file_exists(SAVE_PATH): DirAccess.copy_absolute(SAVE_PATH,SAVE_PATH+".bak")
 	if DirAccess.rename_absolute(SAVE_PATH+".tmp",SAVE_PATH) != OK:
@@ -466,8 +477,9 @@ func load_game() -> void:
 	wins = maxi(0,int(data.get("wins",0)))
 	guardian_defeated = bool(completed[zone])
 	collection_rewarded = bool(data.get("collection_rewarded",false))
+	keeper_rewards = data.get("keeper_rewards",[false,false,false])
 	player = Vector2i(clampi(int(data.get("x",2)),1,16),clampi(int(data.get("y",5)),1,9))
-	if player in obstacle_tiles() or (player.x == 11 and tide == 1): player = Vector2i(2,5)
+	if player in obstacle_tiles() or player == Vector2i(2,5) or not is_land(player) or (player.x == 11 and tide == 1): player = Vector2i(2,6)
 	message = "主存档损坏，已恢复上一份备份。" if recovered else "已恢复上次的旅程。"
 
 func read_valid_save(path: String) -> Dictionary:
@@ -496,8 +508,8 @@ func read_valid_save(path: String) -> Dictionary:
 	if not saved_known is Array or saved_known.size() > PET_COUNT: return {}
 	for id in saved_known:
 		if not (id is int or id is float) or int(id) < 0 or int(id) >= PET_COUNT: return {}
-	for key in ["completed","crystals","relics"]:
-		var values = data.get(key,[false,false,false,false,false,false] if key == "relics" else [])
+	for key in ["completed","crystals","relics","keeper_rewards"]:
+		var values = data.get(key,[false,false,false,false,false,false] if key == "relics" else [false,false,false] if key == "keeper_rewards" else [])
 		if not values is Array or values.size() != (6 if key == "relics" else 3): return {}
 		for value in values:
 			if key == "crystals":
@@ -515,58 +527,60 @@ func _draw() -> void:
 	for y in range(11):
 		for x in range(18):
 			var pos := ORIGIN + Vector2(x,y)*TILE
-			var border := x == 0 or y == 0 or x == 17 or y == 10
+			var border := not is_land(Vector2i(x,y))
 			draw_rect(Rect2(pos,Vector2(TILE,TILE)),ISLANDS[zone].water if border or (x == 11 and tide == 1) else ISLANDS[zone].grass if is_grass(Vector2i(x,y)) else Color("cebfa0") if x == 11 else ISLANDS[zone].ground.lightened(area*0.055))
 			if border or (x == 11 and tide == 1):
 				var drift := sin(walk_time*1.7+x+y)*3
 				draw_line(pos+Vector2(8+drift,22),pos+Vector2(28+drift,22),Color("468298"),2)
 			elif is_grass(Vector2i(x,y)):
-				for k in range(3):
-					var tip := pos + Vector2(8+k*11,10+(x+y+k)%8)
-					draw_line(tip+Vector2(0,16),tip,Color("7cb779"),3)
+				WorldArt.draw_object(self,1,pos+Vector2(20,39),Vector2(36,30))
+			elif (x*3+y*7)%4 == 0:
+				draw_rect(Rect2(pos+Vector2(8,12),Vector2(3,2)),Color(0.3,0.4,0.3,0.16))
 	# Worn paths, shore stones, and island-specific foliage.
 	for x in range(1,17):
 		if x == 11 and tide == 1: continue
 		draw_rect(Rect2(ORIGIN+Vector2(x,5)*TILE+Vector2(0,9),Vector2(40,22)),Color("c5b797"))
 	for y in range(2,6): draw_rect(Rect2(ORIGIN+Vector2(15,y)*TILE+Vector2(9,0),Vector2(22,40)),Color("c5b797"))
-	for tile in obstacle_tiles(): draw_tree(ORIGIN+Vector2(tile)*TILE+Vector2(20,23),zone)
+	for tile in obstacle_tiles():
+		if is_land(tile): draw_tree(ORIGIN+Vector2(tile)*TILE+Vector2(20,23),zone)
 	for y in range(1,10):
 		for x in range(1,17):
-			if (x*7+y*13+zone)%17 == 0 and not is_grass(Vector2i(x,y)) and x != 11:
+			if (x*7+y*13+zone)%17 == 0 and not is_grass(Vector2i(x,y)) and x != 11 and is_land(Vector2i(x,y)):
 				var flower := ORIGIN+Vector2(x,y)*TILE+Vector2(7,12)
+				if is_land(Vector2i(x,y)): WorldArt.draw_object(self,2,flower+Vector2(6,9),Vector2(17,14))
 				draw_rect(Rect2(flower,Vector2(4,7)),Color("507c65"))
 				draw_rect(Rect2(flower+Vector2(-2,-2),Vector2(8,5)),Color("e8d7a1") if zone != 1 else Color("c7b3d8"))
 	var dock := ORIGIN+Vector2(16,8)*TILE
-	for plank in range(4): draw_rect(Rect2(dock+Vector2(-6,plank*7),Vector2(46,5)),Color("93785e"))
-	draw_rect(Rect2(dock+Vector2(30,-5),Vector2(5,40)),Color("e2cba1"))
+	WorldArt.draw_object(self,8,dock+Vector2(5,40),Vector2(54,25))
+	WorldArt.draw_object(self,5,dock+Vector2(22,39),Vector2(43,49))
+	if tide == 0: WorldArt.draw_object(self,8,ORIGIN+Vector2(11,5)*TILE+Vector2(20,39),Vector2(45,28))
 	for i in range(2):
 		if area == 0 and not relics[zone*2+i] and tide == i:
 			var relic_pos := ORIGIN+Vector2(relic_position(i))*TILE+Vector2(20,20)
 			var glow := 3+sin(walk_time*4)*2
-			draw_rect(Rect2(relic_pos-Vector2(7,7),Vector2(14,14)),Color("567d83"))
-			draw_rect(Rect2(relic_pos-Vector2(2,9+glow),Vector2(4,18+glow*2)),Color("fff0bc"))
-			draw_rect(Rect2(relic_pos-Vector2(9+glow,2),Vector2(18+glow*2,4)),Color("fff0bc"))
+			WorldArt.draw_object(self,7,relic_pos+Vector2(0,20),Vector2(29,38))
+			draw_circle(relic_pos+Vector2(0,-glow),2,Color("d7fff0"))
 	# Camp and ancient beacon.
 	var camp := ORIGIN + Vector2(2,5)*TILE
-	draw_colored_polygon(PackedVector2Array([camp+Vector2(0,35),camp+Vector2(20,2),camp+Vector2(40,35)]),Color("f1bd77"))
-	draw_rect(Rect2(camp+Vector2(17,22),Vector2(8,13)),Color("54464c"))
-	draw_rect(Rect2(camp+Vector2(-12,35),Vector2(8,4)),Color("5e524c"))
-	draw_rect(Rect2(camp+Vector2(-10,24+sin(walk_time*6)*2),Vector2(4,10)),Color("f7bd78"))
-	var ruin := ORIGIN + Vector2(15,2)*TILE
-	draw_rect(Rect2(ruin+Vector2(-5,33),Vector2(50,7)),Color("6f8b91"))
-	draw_rect(Rect2(ruin+Vector2(3,-7),Vector2(35,9)),Color("d3d7bd"))
-	draw_rect(Rect2(ruin+Vector2(8,0),Vector2(25,38)),Color("adc2c3"))
-	draw_rect(Rect2(ruin+Vector2(8,20),Vector2(25,5)),Color("748f95"))
-	draw_rect(Rect2(ruin+Vector2(14,6),Vector2(13,16)),Color("96e4c0") if guardian_defeated else Color("d9b575"))
+	WorldArt.draw_object(self,3,camp+Vector2(20,40),Vector2(62,47))
+	WorldArt.draw_object(self,6,camp+Vector2(53,38),Vector2(16,28))
+	var ruin := ORIGIN+Vector2(15,2)*TILE
+	WorldArt.draw_object(self,4,ruin+Vector2(20,40),Vector2(48,76),Color.WHITE if guardian_defeated else Color(0.73,0.8,0.88))
+	if guardian_defeated: draw_circle(ruin+Vector2(20,-24),3+sin(walk_time*2),Color("ffe6a1"))
 	var map_font: Font = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
 	draw_string(map_font,ORIGIN+Vector2(54,193),"营地",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("fff0c6"))
 	draw_string(map_font,ORIGIN+Vector2(580,64),"灯塔",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("fff0c6"))
+	preload("res://scripts/pixel_art.gd").draw_creature(self,ORIGIN+companion_visual*TILE+Vector2(20,25),int(party[active].species),0.32,0 if reduce_motion else walk_time)
+	var keeper_pos := ORIGIN+Vector2(3,4)*TILE
+	draw_texture_rect(preload("res://scripts/pixel_art.gd").keeper_token(),Rect2(keeper_pos-Vector2(7,12),Vector2(54,54)),false,Color(0.72,0.86,1))
+	draw_string(map_font,keeper_pos+Vector2(-2,-5),"阿岚",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("fff0c6"))
 	var hero := ORIGIN + visual_player*TILE
+	draw_string(map_font,hero+Vector2(-1,-8),"洛汐",HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("fff0c6"))
 	draw_rect(Rect2(hero+Vector2(10,30),Vector2(24,6)),Color("50665a"))
-	draw_texture_rect(preload("res://scripts/pixel_art.gd").hero_portrait(),Rect2(hero-Vector2(7,12),Vector2(54,54)),false)
+	draw_texture_rect(preload("res://scripts/pixel_art.gd").hero_portrait(false,1+int(walk_time*12)%2 if visual_player.distance_to(Vector2(player)) > 0.04 else 0),Rect2(hero-Vector2(7,12),Vector2(54,54)),false)
 
 func draw_beast(pos: Vector2, id: int, scale_factor: float) -> void:
-	draw_ellipse_shadow(pos+Vector2(0,43)*scale_factor,Vector2(50,10)*scale_factor)
+	draw_ellipse_shadow(pos+Vector2(0,49)*scale_factor,Vector2(50,10)*scale_factor)
 	preload("res://scripts/pixel_art.gd").draw_creature(self,pos,id,scale_factor,0.0 if reduce_motion else walk_time)
 
 func draw_ellipse_shadow(pos: Vector2, size_value: Vector2) -> void:
@@ -618,6 +632,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			else: show_pause()
 		elif event.physical_keycode == KEY_T and modal == null and mode == "explore": change_tide()
 		elif event.physical_keycode == KEY_E and modal == null and mode == "explore": rest()
+		elif event.physical_keycode == KEY_R and modal == null and mode == "explore": talk_keeper()
 
 func close_modal() -> void:
 	if modal != null:
@@ -679,8 +694,8 @@ func modal_button(text: String, callback: Callable) -> void:
 	if not get_viewport().gui_get_focus_owner() or not modal.is_ancestor_of(get_viewport().gui_get_focus_owner()): b.grab_focus()
 
 func show_title() -> void:
+	open_modal("潮 汐 灵 约", "T I D E B O U N D   /   v0.5.0\n\n海水会记住每一次约定。\n三座岛屿 · 九片生态区 · 108 种灵兽\nWASD 移动 · T 潮铃 · Esc 菜单")
 	audio.play_track("title")
-	open_modal("潮 汐 灵 约", "T I D E B O U N D   /   v0.4.0\n\n海水会记住每一次约定。\n三座岛屿 · 九片生态区 · 108 种灵兽\nWASD 移动 · T 潮铃 · Esc 菜单")
 	var shade: ColorRect = modal.get_child(0)
 	shade.color = Color(0.02,0.05,0.1,0.16)
 	var panel: PanelContainer = modal.get_child(1)
@@ -734,7 +749,7 @@ func new_game() -> void:
 	reserve = []
 	known = [0]
 	active = 0
-	player = Vector2i(2,5)
+	player = Vector2i(2,6)
 	zone = 0
 	area = 0
 	completed = [false,false,false]
@@ -743,9 +758,11 @@ func new_game() -> void:
 	fragments = 0
 	guardian_defeated = false
 	collection_rewarded = false
+	keeper_rewards = [false,false,false]
 	guardian_battle = false
 	mode = "explore"
 	tide = 0
+	reset_visual_positions()
 	wins = 0
 	steps_walked = 0
 	seconds_played = 0
@@ -883,7 +900,7 @@ func load_settings() -> void:
 	audio.set_volume(volume)
 
 func show_credits() -> void:
-	open_modal("制作与版权", "潮汐灵约 / Tidebound\n原创游戏代码、程序绘制像素图形与合成音乐。\n使用 Godot Engine 4.6.3（MIT）。\n字体：Noto Sans CJK（SIL Open Font License 1.1）。\n许可全文随源码与发行包提供。\n\n本游戏为独立原创项目，与其他怪物收集作品无隶属关系。\n当前版本不联网、不含内购、不采集遥测。")
+	open_modal("制作与版权", "潮汐灵约 / Tidebound\n游戏设计、代码与美术由 AI 辅助创作。\n宠物、场景物件、角色立绘及标题插画为 AI 生成/迭代素材。\n配乐与音效由项目内合成器生成。\n使用 Godot Engine 4.6.3（MIT）。\n字体：Noto Sans CJK（SIL Open Font License 1.1）。\n许可全文随源码与发行包提供。\n\n本游戏为独立原创项目，与其他怪物收集作品无隶属关系。\n当前版本不联网、不含内购、不采集遥测。")
 	modal_button("返回",show_title)
 
 func change_tide() -> void:
@@ -902,8 +919,10 @@ func travel(destination: int) -> void:
 	area = 0
 	fragments = int(crystals[zone])
 	guardian_defeated = bool(completed[zone])
-	player = Vector2i(2,5)
+	player = Vector2i(2,6)
 	visual_player = Vector2(player)
+	companion_target = Vector2(player)+Vector2(0,1)
+	companion_visual = companion_target
 	tide = 0
 	heal_party()
 	message = "抵达" + str(ISLANDS[zone].name) + "，营地已准备好。"
@@ -972,13 +991,8 @@ func obstacle_tiles() -> Array:
 	return [Vector2i(3,2),Vector2i(4,2),Vector2i(3,3),Vector2i(8,1),Vector2i(9,1),Vector2i(13,3),Vector2i(14,3),Vector2i(16,5),Vector2i(4,8),Vector2i(3,8),Vector2i(2,9)]
 
 func draw_tree(pos: Vector2, variant: int) -> void:
-	draw_rect(Rect2(pos+Vector2(-18,13),Vector2(36,7)),Color("4d6c5f"))
-	draw_rect(Rect2(pos+Vector2(-4,-7),Vector2(8,23)),Color("7b6550"))
-	var leaf := Color("497b62") if variant == 0 else Color("687a98") if variant == 1 else Color("798d6d")
-	for r in [Rect2(-20,-22,40,26),Rect2(-14,-32,28,18),Rect2(-9,-39,18,12)]: draw_rect(Rect2(pos+r.position,r.size),leaf)
-	draw_rect(Rect2(pos+Vector2(-13,-28),Vector2(8,13)),leaf.lightened(0.17))
-	draw_rect(Rect2(pos+Vector2(8,-18),Vector2(9,15)),leaf.darkened(0.15))
-	if variant == 1: draw_rect(Rect2(pos+Vector2(-2,-29),Vector2(4,7)),Color("e9d99b"))
+	var tint := Color.WHITE if variant == 0 else Color(0.8,0.85,1) if variant == 1 else Color(1,0.91,0.77)
+	WorldArt.draw_object(self,0,pos+Vector2(0,17),Vector2(48,62),tint)
 
 func relic_position(index: int) -> Vector2i:
 	var positions := [[Vector2i(7,2),Vector2i(14,8)],[Vector2i(6,8),Vector2i(13,1)],[Vector2i(6,3),Vector2i(14,7)]]
@@ -1079,8 +1093,10 @@ func visit_region(island: int, region: int) -> void:
 	area = region
 	fragments = int(crystals[zone])
 	guardian_defeated = bool(completed[zone])
-	player = Vector2i(2,5)
+	player = Vector2i(2,6)
 	visual_player = Vector2(player)
+	companion_target = Vector2(player)+Vector2(0,1)
+	companion_visual = companion_target
 	tide = 0
 	heal_party()
 	message = "抵达%s。按 T 切换潮相，寻找不同的同伴。" % AREAS[zone][area]
@@ -1091,22 +1107,98 @@ func visit_region(island: int, region: int) -> void:
 
 func show_character() -> void:
 	open_modal("洛汐 · 群岛守灯人", "她带着一枚旧潮铃出发，想知道海的另一端是否仍有人守着灯。\n今天，海风里多了 %d 个愿意回应她的名字。" % discovered())
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation",25)
 	var portrait := TextureRect.new()
-	portrait.texture = preload("res://scripts/pixel_art.gd").hero_portrait()
+	portrait.texture = preload("res://scripts/pixel_art.gd").hero_portrait(true)
 	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	portrait.custom_minimum_size = Vector2(600,150)
-	modal_body.add_child(portrait)
+	portrait.custom_minimum_size = Vector2(230,300)
+	row.add_child(portrait)
 	var stats := Label.new()
-	stats.text = "旅程时长  %d 分钟\n踏过海岸  %d 步\n建立契约  %d / 108 种\n点亮灯塔  %d / 3\n战斗与契约成功  %d 次\n发现潮碑  %d / 6" % [int(seconds_played/60),steps_walked,discovered(),completed.count(true),wins,relics.count(true)]
+	stats.text = "旅程时长  %d 分钟\n踏过海岸  %d 步\n建立契约  %d / 108 种\n点亮灯塔  %d / 3\n战斗与契约成功  %d 次\n发现潮碑  %d / 6\n完成生态委托  %d / 3" % [int(seconds_played/60),steps_walked,discovered(),completed.count(true),wins,relics.count(true),keeper_rewards.count(true)]
 	if collection_rewarded: stats.text += "\n称号  群岛之友"
-	modal_body.add_child(stats)
+	row.add_child(stats)
+	modal_body.add_child(row)
 	modal_button("返回旅程",close_modal)
-
-func capture_chance() -> float:
-	if guardian_battle or enemy.is_empty(): return 0
-	return minf(0.95,0.2+0.7*(1.0-float(enemy.hp)/float(enemy.max_hp))+relics.count(true)*0.005)
 
 func _exit_tree() -> void:
 	preload("res://scripts/pixel_art.gd").texture_cache.clear()
+	WorldArt.cache.clear()
+
+func is_land(point: Vector2i) -> bool:
+	if point.x < 1 or point.x > 16 or point.y < 1 or point.y > 9: return false
+	if point.y == 1 and (point.x < 3 or point.x > 14): return false
+	if point.y == 2 and point.x == 1: return false
+	if point.y == 9 and (point.x < 2 or point.x > 15): return false
+	if area == 2 and point.y == 1 and point.x in [3,14]: return false
+	return true
+
+func reset_visual_positions() -> void:
+	visual_player = Vector2(player)
+	var behind := player+Vector2i(0,1)
+	if not is_land(behind) or behind in obstacle_tiles() or behind in [Vector2i(2,5),Vector2i(3,4)]: behind = player+Vector2i(0,-1)
+	if not is_land(behind) or behind in obstacle_tiles() or behind in [Vector2i(2,5),Vector2i(3,4)]: behind = player
+	companion_target = Vector2(behind)
+	companion_visual = companion_target
+
+func local_dex_count(island: int) -> int:
+	var count := 0
+	for id in known:
+		if int(SPECIES[id].island) == island: count += 1
+	return count
+
+func talk_keeper() -> void:
+	if mode != "explore" or (player.distance_to(Vector2i(2,5)) > 2 and player.distance_to(Vector2i(3,4)) > 1):
+		message = "阿岚在西侧营地附近等你。靠近后按 R，或选择交谈。"
+		refresh()
+		return
+	var speech := ["灯不是为了告诉海我们在这里，而是告诉归来的人：这里一直有人等。先认识同伴，再去寻找属于你的光。","雾钟湾的每一声回响都有自己的名字。别急着赶路，换一片海岸、换一种潮相，也许就会遇到新的朋友。","你已经走到这片海最远的地方。最后一盏灯并不难点亮，难的是记住一路上遇见过的每一个名字。"]
+	open_modal("阿岚 · 营地守灯人", speech[zone])
+	var portrait := TextureRect.new()
+	portrait.texture = load("res://assets/art/aran_portrait.png")
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	portrait.custom_minimum_size = Vector2(620,180)
+	modal_body.add_child(portrait)
+	modal_button("查看本岛生态委托",show_keeper_quest)
+	modal_button("寻找尚未记录的同伴",keeper_hint)
+	modal_button("返回旅程",close_modal)
+
+func show_keeper_quest() -> void:
+	var count := local_dex_count(zone)
+	open_modal("生态手记 · "+str(ISLANDS[zone].name), "阿岚请你记录至少六种本岛灵兽。\n"+"当前记录：%d / 6\n奖励：六张契约符、全队恢复，以及永久 +2%% 契约成功率。\n每座岛可完成一次。" % count)
+	modal_button("委托已完成" if keeper_rewards[zone] else "领取观察奖励",claim_keeper_reward)
+	modal_body.get_child(modal_body.get_child_count()-1).disabled = bool(keeper_rewards[zone]) or count < 6
+	modal_button("请阿岚提供线索",keeper_hint)
+	modal_button("返回营地交谈",talk_keeper)
+
+func claim_keeper_reward() -> void:
+	if keeper_rewards[zone] or local_dex_count(zone) < 6: return
+	keeper_rewards[zone] = true
+	seals += 6
+	heal_party()
+	message = "完成生态手记！获得六张契约符，契约成功率永久 +2%。"
+	audio.sfx("win")
+	save_game(false)
+	refresh()
+	show_keeper_quest()
+
+func keeper_hint() -> void:
+	var missing: Array = []
+	for id in range(PET_COUNT):
+		if int(SPECIES[id].island) == zone and not known.has(id): missing.append(id)
+	if missing.is_empty():
+		open_modal("每个名字都有回声", "你已经记录了本岛所有 36 种灵兽。阿岚笑着把这段故事写进了航海日志。")
+	else:
+		var id: int = missing[rng.randi_range(0,missing.size()-1)]
+		var species: Dictionary = SPECIES[id]
+		open_modal("海风带来的线索", "试着去 %s，在%s寻找 %s。\n\n%s" % [AREAS[zone][int(species.area)],"两种潮相都可" if int(species.tide) == -1 else "低潮时" if int(species.tide) == 0 else "高潮时",species.name,species.lore])
+	modal_button("返回交谈",talk_keeper)
+	modal_button("出发寻找",close_modal)
+
+func capture_chance() -> float:
+	if guardian_battle or enemy.is_empty(): return 0
+	return minf(0.95,0.2+0.7*(1.0-float(enemy.hp)/float(enemy.max_hp))+relics.count(true)*0.005+keeper_rewards.count(true)*0.02)

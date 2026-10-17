@@ -74,7 +74,7 @@ func run() -> void:
 	# Force a complete defeat with the enemy's actual damage path.
 	for p in game.party: p.hp = 0
 	game.enemy_turn()
-	check(game.mode == "explore" and game.player == Vector2i(2,5), "defeat returns to camp")
+	check(game.mode == "explore" and game.player == Vector2i(2,6), "defeat returns to camp")
 	check(game.party[0].hp == game.party[0].max_hp and game.party[1].hp == game.party[1].max_hp, "defeat recovers whole party")
 	game.seals = 0
 	game.rest()

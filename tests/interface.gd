@@ -44,7 +44,7 @@ func run() -> void:
 	await process_frame
 	await process_frame
 	key(KEY_D,false)
-	check(game.player == Vector2i(3,5),"physical keyboard moves character")
+	check(game.player == Vector2i(3,6),"physical keyboard moves character")
 	game.set_process(false)
 	key(KEY_T,true)
 	key(KEY_T,false)
@@ -116,6 +116,34 @@ func run() -> void:
 	game.turn("soothe")
 	check(game.enemy.hp == 1 and game.mode == "battle","soothe is nonlethal even with overlevelled companion")
 	check(game.capture_chance() > 0.8,"low health exposes a high capture chance")
+	game.turn("flee")
+	game.visit_region(0,0)
+	game.known = []
+	for id in range(game.PET_COUNT):
+		if int(game.SPECIES[id].island) == 0 and game.known.size() < 6: game.known.append(id)
+	game.keeper_rewards = [false,false,false]
+	game.start_battle(1)
+	var chance_before: float = game.capture_chance()
+	game.turn("flee")
+	game.talk_keeper()
+	check(game.modal_body.get_child(0).text.contains("阿岚"),"keeper dialogue opens at camp")
+	game.show_keeper_quest()
+	game.claim_keeper_reward()
+	check(game.keeper_rewards[0] and game.seals >= 14,"ecology quest grants one-time reward")
+	var supplied: int = game.seals
+	game.claim_keeper_reward()
+	check(game.seals == supplied,"quest reward cannot be claimed twice")
+	game.close_modal()
+	game.start_battle(1)
+	check(is_equal_approx(game.capture_chance()-chance_before,0.02),"ecology quest adds permanent capture bonus")
+	game.turn("flee")
+	game.save_game(false)
+	game.keeper_rewards = [false,false,false]
+	game.load_game()
+	check(game.keeper_rewards[0],"quest completion survives save/load")
+	game.player = Vector2i(4,4)
+	game.move_player(Vector2i(-1,0))
+	check(game.modal != null and game.player == Vector2i(4,4),"bumping keeper from east starts conversation")
 	game.audio.shutdown()
 	await create_timer(0.2).timeout
 	game.queue_free()
