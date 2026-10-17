@@ -18,6 +18,7 @@ func run() -> void:
 	game = load("res://main.tscn").instantiate()
 	root.add_child(game)
 	game.set_process(false)
+	game.animations_enabled = false
 	game.party = [game.creature(0)]
 	game.active = 0
 	game.seals = 8
@@ -151,7 +152,7 @@ func run() -> void:
 	file.store_string("{broken")
 	file.close()
 	game.load_game()
-	check(game.zone == 2, "broken save does not overwrite live state")
+	check(game.zone == 2 and game.message.contains("备份"), "broken save recovers validated backup")
 	game.save_game(false)
 	await process_frame
 	game.queue_free()

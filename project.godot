@@ -8,6 +8,9 @@ config/features=PackedStringArray("4.6", "GL Compatibility")
 window/size/viewport_width=1152
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+window/size/min_width=768
+window/size/min_height=480
 [rendering]
 renderer/rendering_method="gl_compatibility"
 textures/default_filters/use_nearest_mipmap_filter=false

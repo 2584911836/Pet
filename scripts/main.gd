@@ -28,12 +28,21 @@ var completed: Array = [false, false, false]
 var crystals: Array = [0, 0, 0]
 var tide := 0
 var focus := 3
+var enemy_round := 0
+var battle_id := 0
+var relics: Array = [false,false,false,false,false,false]
 var salves := 3
 var modal: Control
 var modal_body: VBoxContainer
 var audio: Node
 var volume := 0.65
+var reduce_motion := false
 var walk_time := 0.0
+var busy := false
+var animations_enabled := true
+var impact_left := 0.0
+var impact_enemy := true
+var floating_text := ""
 var particles: Array = []
 var buttons: VBoxContainer
 var info: Label
@@ -66,7 +75,7 @@ func build_ui() -> void:
 	title.add_theme_font_size_override("font_size", 29)
 	add_child(title)
 	var subtitle := Label.new()
-	subtitle.text = "微光群岛     •     原创怪物收集冒险     /     SHORT ADVENTURE 0.2"
+	subtitle.text = "微光群岛     •     原创怪物收集冒险     /     SHORT ADVENTURE 0.3"
 	subtitle.position = Vector2(42, 70)
 	subtitle.modulate = Color("9aafbb")
 	add_child(subtitle)
@@ -96,10 +105,13 @@ func add_button(caption: String, action: Callable) -> void:
 	b.theme = get_meta("game_theme")
 	b.custom_minimum_size = Vector2(295, 35)
 	b.add_theme_font_size_override("font_size", 17)
+	b.disabled = busy
 	b.pressed.connect(action)
 	buttons.add_child(b)
 
 func refresh() -> void:
+	var old_focus := get_viewport().gui_get_focus_owner()
+	var focus_index := old_focus.get_index() if old_focus != null and old_focus.get_parent() == buttons else 0
 	for child in buttons.get_children():
 		buttons.remove_child(child)
 		child.queue_free()
@@ -131,6 +143,8 @@ func refresh() -> void:
 	for i in range(party.size()):
 		if i != active:
 			add_button("换上 %s  %d/%d" % [SPECIES[int(party[i].species)].name, party[i].hp, party[i].max_hp], switch_to.bind(i))
+	if mode == "battle" and buttons.get_child_count() > 0 and not busy:
+		buttons.get_child(clampi(focus_index,0,buttons.get_child_count()-1)).grab_focus()
 	queue_redraw()
 
 func discovered() -> int:
@@ -138,10 +152,10 @@ func discovered() -> int:
 
 func _process(delta: float) -> void:
 	walk_time += delta
+	impact_left = maxf(0,impact_left-delta)
 	queue_redraw()
 	step_timer -= delta
 	if modal != null or mode != "explore": return
-	if Input.is_physical_key_pressed(KEY_E): rest()
 	if step_timer > 0: return
 	var d := Vector2i.ZERO
 	if Input.is_physical_key_pressed(KEY_A) or Input.is_action_pressed("ui_left"): d.x = -1
@@ -153,6 +167,8 @@ func _process(delta: float) -> void:
 	move_player(d)
 
 func is_grass(p: Vector2i) -> bool:
+	if zone == 1: return (p.x >= 4 and p.x <= 8 and p.y >= 6 and p.y <= 9) or (p.x >= 12 and p.x <= 16 and p.y <= 4)
+	if zone == 2: return (p.x >= 4 and p.x <= 9 and p.y <= 4) or (p.x >= 13 and p.y >= 6)
 	if p.y == 5 or (p.x == 15 and p.y <= 5): return false
 	return (p.x >= 5 and p.x <= 10 and p.y >= 3 and p.y <= 8) or (p.x >= 13 and p.y >= 6)
 
@@ -165,6 +181,9 @@ func move_player(d: Vector2i) -> void:
 		return
 	if target in obstacle_tiles(): return
 	player = target
+	if find_relic():
+		refresh()
+		return
 	if player == Vector2i(15, 2):
 		if guardian_defeated: message = "灯塔已恢复光芒。可继续探索，或从右侧菜单启航。"
 		elif fragments >= 3: start_battle(int(ISLANDS[zone].boss), true)
@@ -176,10 +195,13 @@ func move_player(d: Vector2i) -> void:
 	refresh()
 
 func start_battle(id: int, guardian: bool = false) -> void:
+	battle_id += 1
+	busy = false
 	mode = "battle"
 	guardian_battle = guardian
 	enemy = creature(id, int(ISLANDS[zone].level) if guardian else rng.randi_range(1+zone*2, 2+zone*2))
 	focus = 3
+	enemy_round = 0
 	salves = 3
 	audio.play_track("battle")
 	audio.sfx("hit")
@@ -192,7 +214,7 @@ func effectiveness(attacker: int, defender: int) -> float:
 	return 1.0
 
 func turn(action: String) -> void:
-	if mode != "battle": return
+	if mode != "battle" or busy: return
 	var p: Dictionary = party[active]
 	var s: Dictionary = SPECIES[int(p.species)]
 	var e: Dictionary = SPECIES[int(enemy.species)]
@@ -225,6 +247,7 @@ func turn(action: String) -> void:
 		"guard":
 			focus = mini(3, focus+1)
 			guarding = true
+			if int(p.species) == 2: p.hp = mini(int(p.max_hp),int(p.hp)+4)
 			message = "你凝聚潮息，抵御下一次攻击。"
 		"heal":
 			if salves <= 0:
@@ -232,32 +255,54 @@ func turn(action: String) -> void:
 				refresh()
 				return
 			salves -= 1
-			p.hp = mini(int(p.max_hp), int(p.hp)+24)
+			p.hp = mini(int(p.max_hp), int(p.hp)+(30 if int(p.species) == 5 else 24))
 			message = "药草恢复了 24 点生命。"
 		_:
 			if action == "skill" and focus < 2:
 				message = "潮息不足。普通攻击或防御可以恢复潮息。"
 				refresh()
 				return
-			focus = focus-2 if action == "skill" else mini(3, focus+1)
+			focus = focus-2 if action == "skill" else mini(3, focus+(2 if int(p.species) == 7 else 1))
 			var mult := effectiveness(int(s.type), int(e.type)) if action == "skill" else 1.0
 			if action == "skill":
 				mult *= 1.2
 				if int(s.type) == (2 if tide == 1 else 1): mult *= 1.2
+			if int(p.species) == 1 and int(p.hp)*2 < int(p.max_hp): mult *= 1.25
+			if int(p.species) == 6 and action == "skill" and int(enemy.hp)*2 > int(enemy.max_hp): mult *= 1.2
 			var damage := maxi(1, int((int(s.power) + int(p.level)*2) * mult) + rng.randi_range(-2, 2))
+			if action == "skill" and int(p.species) in [0,3]: p.hp = mini(int(p.max_hp),int(p.hp)+(4 if int(p.species) == 0 else 8))
+			if action == "skill" and int(p.species) == 8: guarding = true
 			audio.sfx("hit")
 			enemy.hp = maxi(0, int(enemy.hp) - damage)
+			impact_left = 0.42
+			impact_enemy = true
+			floating_text = "−"+str(damage)
 			message = "%s造成 %d 点伤害。%s" % ["共鸣技" if action == "skill" else "攻击", damage, "属性优势！" if mult > 1 else ""]
 			if int(enemy.hp) <= 0:
 				finish_battle("战斗胜利！")
 				return
-	enemy_turn()
+	var turn_battle := battle_id
+	busy = true
+	refresh()
+	if animations_enabled: await get_tree().create_timer(0.42).timeout
+	if turn_battle != battle_id: return
+	if mode == "battle": enemy_turn()
+	busy = false
+	refresh()
 
 func enemy_turn() -> void:
 	var p: Dictionary = party[active]
+	enemy_round += 1
 	var damage := int(SPECIES[int(enemy.species)].power) + int(enemy.level)
+	if guardian_battle and enemy_round % 3 == 0:
+		damage = int(damage*1.7)
+		message += " 守卫释放蓄力技！"
+	if int(p.species) == 4: damage = maxi(1,damage-2)
 	if guarding: damage = maxi(1, damage / 3)
 	p.hp = maxi(0, int(p.hp) - damage)
+	impact_left = 0.42
+	impact_enemy = false
+	floating_text = "−"+str(damage)
 	message += " 对方反击 %d 点。" % damage
 	if int(p.hp) <= 0:
 		for i in range(party.size()):
@@ -283,12 +328,12 @@ func finish_battle(text: String) -> void:
 	var p: Dictionary = party[active]
 	p.xp = int(p.xp) + 1
 	if int(p.xp) >= 3:
-		if int(p.level) >= 99: p.xp = 0
-		else: p.level = int(p.level) + 1
 		p.xp = 0
-		p.max_hp = int(p.max_hp) + 6
-		p.hp = p.max_hp
-		text += " 同伴升级，生命恢复！"
+		if int(p.level) < 99:
+			p.level = int(p.level)+1
+			p.max_hp = int(p.max_hp)+6
+			p.hp = p.max_hp
+			text += " 同伴升级，生命恢复！"
 	if guardian_battle:
 		guardian_defeated = true
 		completed[zone] = true
@@ -300,7 +345,7 @@ func finish_battle(text: String) -> void:
 	if guardian_battle: show_story(str(ISLANDS[zone].ending))
 
 func switch_to(index: int) -> void:
-	if int(party[index].hp) <= 0: return
+	if busy or int(party[index].hp) <= 0: return
 	active = index
 	message = "出战灵兽已切换。"
 	if mode == "battle": enemy_turn()
@@ -326,7 +371,7 @@ func save_game(notify: bool = true) -> void:
 		message = "存档失败：无法写入用户目录。"
 		refresh()
 		return
-	file.store_string(JSON.stringify({"version":2,"zone":zone,"completed":completed,"crystals":crystals,"tide":tide,"party":party,"reserve":reserve,"known":known,"active":active,"seals":seals,"fragments":fragments,"wins":wins,"guardian":guardian_defeated,"x":player.x,"y":player.y}))
+	file.store_string(JSON.stringify({"version":2,"zone":zone,"completed":completed,"crystals":crystals,"tide":tide,"relics":relics,"party":party,"reserve":reserve,"known":known,"active":active,"seals":seals,"fragments":fragments,"wins":wins,"guardian":guardian_defeated,"x":player.x,"y":player.y}))
 	file.close()
 	if FileAccess.file_exists(SAVE_PATH): DirAccess.copy_absolute(SAVE_PATH,SAVE_PATH+".bak")
 	if DirAccess.rename_absolute(SAVE_PATH+".tmp",SAVE_PATH) != OK:
@@ -339,48 +384,66 @@ func save_game(notify: bool = true) -> void:
 
 func load_game() -> void:
 	if not FileAccess.file_exists(SAVE_PATH): return
-	var raw := FileAccess.get_file_as_string(SAVE_PATH)
-	if raw.length() > 262144: return
-	var parser := JSON.new()
-	if parser.parse(raw) != OK: return
-	var data = parser.data
-	if not data is Dictionary or data.get("version") != 2: return
-	var loaded = data.get("party", [])
-	if not loaded is Array or loaded.is_empty() or loaded.size() > 6: return
-	for p in loaded:
-		if not valid_creature(p): return
-	var saved_completed = data.get("completed",[])
-	var saved_crystals = data.get("crystals",[])
-	if not saved_completed is Array or saved_completed.size() != 3 or not saved_crystals is Array or saved_crystals.size() != 3: return
-	for v in saved_completed:
-		if not v is bool: return
-	for v in saved_crystals:
-		if not (v is float or v is int): return
-	completed = saved_completed
-	crystals = saved_crystals
-	zone = clampi(int(data.get("zone",0)),0,2)
-	tide = clampi(int(data.get("tide",0)),0,1)
-	var saved_reserve = data.get("reserve",[])
-	if not saved_reserve is Array or saved_reserve.size() > 50: return
-	for p in saved_reserve:
-		if not valid_creature(p): return
-	var saved_known = data.get("known",[0])
-	if not saved_known is Array or saved_known.size() > 9: return
-	for id in saved_known:
-		if not (id is int or id is float) or int(id) < 0 or int(id) >= 9: return
+	var data := read_valid_save(SAVE_PATH)
+	var recovered := false
+	if data.is_empty():
+		data = read_valid_save(SAVE_PATH+".bak")
+		recovered = not data.is_empty()
+	if data.is_empty():
+		message = "存档无法读取，当前旅程未被覆盖。可从标题开始新旅程。"
+		return
+	# No live state is changed until the entire save has passed validation.
+	party = data.party
+	reserve = data.get("reserve",[])
 	known = []
-	for id in saved_known:
+	for id in data.get("known",[0]):
 		if not known.has(int(id)): known.append(int(id))
-	reserve = saved_reserve
-	party = loaded
-	active = clampi(int(data.get("active",0)), 0, party.size()-1)
-	seals = maxi(0,int(data.get("seals",8)))
-	fragments = clampi(int(data.get("fragments",0)),0,3)
+	completed = data.completed
+	crystals = data.crystals
+	relics = data.get("relics",[false,false,false,false,false,false])
+	zone = int(data.get("zone",0))
+	tide = int(data.get("tide",0))
+	active = clampi(int(data.get("active",0)),0,party.size()-1)
+	seals = clampi(int(data.get("seals",8)),0,9999)
+	fragments = clampi(int(crystals[zone]),0,3)
 	wins = maxi(0,int(data.get("wins",0)))
 	guardian_defeated = bool(completed[zone])
 	player = Vector2i(clampi(int(data.get("x",2)),1,16),clampi(int(data.get("y",5)),1,9))
-	if guardian_defeated: journal = "试玩完成 / 遗迹重燃。继续探索，收集所有灵兽。"
-	message = "已恢复上次的旅程。"
+	if player in obstacle_tiles() or (player.x == 11 and tide == 1): player = Vector2i(2,5)
+	message = "主存档损坏，已恢复上一份备份。" if recovered else "已恢复上次的旅程。"
+
+func read_valid_save(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path): return {}
+	var raw := FileAccess.get_file_as_string(path)
+	if raw.length() > 262144: return {}
+	var parser := JSON.new()
+	if parser.parse(raw) != OK: return {}
+	var data = parser.data
+	if not data is Dictionary or data.get("version") != 2: return {}
+	for key in ["zone","tide","active","seals","wins","x","y"]:
+		var value = data.get(key,0)
+		if not (value is int or value is float): return {}
+		if not is_finite(float(value)) or absf(float(value)) > 1000000: return {}
+	if int(data.get("zone",0)) < 0 or int(data.get("zone",0)) > 2: return {}
+	if int(data.get("tide",0)) < 0 or int(data.get("tide",0)) > 1: return {}
+	var loaded = data.get("party",[])
+	var saved_reserve = data.get("reserve",[])
+	if not loaded is Array or loaded.is_empty() or loaded.size() > 6: return {}
+	if not saved_reserve is Array or saved_reserve.size() > 50: return {}
+	for p in loaded+saved_reserve:
+		if not valid_creature(p): return {}
+	var saved_known = data.get("known",[0])
+	if not saved_known is Array or saved_known.size() > 9: return {}
+	for id in saved_known:
+		if not (id is int or id is float) or int(id) < 0 or int(id) >= 9: return {}
+	for key in ["completed","crystals","relics"]:
+		var values = data.get(key,[false,false,false,false,false,false] if key == "relics" else [])
+		if not values is Array or values.size() != (6 if key == "relics" else 3): return {}
+		for value in values:
+			if key == "crystals":
+				if not (value is int or value is float) or int(value) < 0 or int(value) > 3: return {}
+			elif not value is bool: return {}
+	return data
 
 func _draw() -> void:
 	draw_rect(Rect2(0,0,1152,720),Color("101e2b"))
@@ -416,6 +479,13 @@ func _draw() -> void:
 	var dock := ORIGIN+Vector2(16,8)*TILE
 	for plank in range(4): draw_rect(Rect2(dock+Vector2(-6,plank*7),Vector2(46,5)),Color("93785e"))
 	draw_rect(Rect2(dock+Vector2(30,-5),Vector2(5,40)),Color("e2cba1"))
+	for i in range(2):
+		if not relics[zone*2+i] and tide == i:
+			var relic_pos := ORIGIN+Vector2(relic_position(i))*TILE+Vector2(20,20)
+			var glow := 3+sin(walk_time*4)*2
+			draw_rect(Rect2(relic_pos-Vector2(7,7),Vector2(14,14)),Color("567d83"))
+			draw_rect(Rect2(relic_pos-Vector2(2,9+glow),Vector2(4,18+glow*2)),Color("fff0bc"))
+			draw_rect(Rect2(relic_pos-Vector2(9+glow,2),Vector2(18+glow*2,4)),Color("fff0bc"))
 	# Camp and ancient beacon.
 	var camp := ORIGIN + Vector2(2,5)*TILE
 	draw_colored_polygon(PackedVector2Array([camp+Vector2(0,35),camp+Vector2(20,2),camp+Vector2(40,35)]),Color("f1bd77"))
@@ -439,26 +509,8 @@ func _draw() -> void:
 	draw_rect(Rect2(hero+Vector2(27,18),Vector2(6,13)),Color("d78668"))
 
 func draw_beast(pos: Vector2, id: int, scale_factor: float) -> void:
-	var c: Color = SPECIES[id].color
-	var shape := id % 3
-	draw_ellipse_shadow(pos + Vector2(0,43)*scale_factor,Vector2(50,10)*scale_factor)
-	var blocks := [Rect2(-27,-16,54,48),Rect2(-19,-32,38,22),Rect2(-32,22,18,17),Rect2(14,22,18,17)]
-	for r in blocks: draw_rect(Rect2(pos+r.position*scale_factor,r.size*scale_factor),c)
-	if shape == 0:
-		draw_rect(Rect2(pos+Vector2(-8,-52)*scale_factor,Vector2(13,26)*scale_factor),Color("58a86e"))
-		draw_rect(Rect2(pos+Vector2(3,-46)*scale_factor,Vector2(20,10)*scale_factor),Color("b9e492"))
-	elif shape == 1:
-		for x in [-24,12]: draw_rect(Rect2(pos+Vector2(x,-47)*scale_factor,Vector2(13,24)*scale_factor),c)
-		draw_rect(Rect2(pos+Vector2(25,3)*scale_factor,Vector2(24,14)*scale_factor),Color("f9d58b"))
-	else:
-		for x in [-42,27]: draw_rect(Rect2(pos+Vector2(x,0)*scale_factor,Vector2(15,24)*scale_factor),Color("a2e6e4"))
-	if id >= 3:
-		for k in range(3):
-			draw_rect(Rect2(pos+Vector2(-16+k*12,-27)*scale_factor,Vector2(6,8)*scale_factor),Color("eff0c3"))
-	if id >= 6:
-		draw_rect(Rect2(pos+Vector2(-8,-45)*scale_factor,Vector2(16,9)*scale_factor),Color("f4db98"))
-	for x in [-14,9]: draw_rect(Rect2(pos+Vector2(x,-10)*scale_factor,Vector2(6,9)*scale_factor),Color("1c3445"))
-	draw_rect(Rect2(pos+Vector2(-6,10)*scale_factor,Vector2(12,4)*scale_factor),Color("45616b"))
+	draw_ellipse_shadow(pos+Vector2(0,43)*scale_factor,Vector2(50,10)*scale_factor)
+	preload("res://scripts/pixel_art.gd").draw_creature(self,pos,id,scale_factor,0.0 if reduce_motion else walk_time)
 
 func draw_ellipse_shadow(pos: Vector2, size_value: Vector2) -> void:
 	draw_set_transform(pos,0,Vector2(1,size_value.y/size_value.x))
@@ -468,13 +520,18 @@ func draw_ellipse_shadow(pos: Vector2, size_value: Vector2) -> void:
 func draw_battle() -> void:
 	draw_rect(Rect2(40,146,720,440),Color("234453"))
 	for i in range(9): draw_rect(Rect2(40,146+i*49,720,1),Color("2b4c59"))
-	draw_beast(Vector2(220,435),int(party[active].species),2.1)
-	draw_beast(Vector2(565,310),int(enemy.species),1.8)
+	var shake := sin(impact_left*60)*4*pow(impact_left/0.42,2) if impact_left > 0 and not reduce_motion else 0.0
+	draw_beast(Vector2(220+shake if not impact_enemy else 220.0,435),int(party[active].species),2.1)
+	draw_beast(Vector2(565+shake if impact_enemy else 565.0,310),int(enemy.species),1.8)
 	var font: Font = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
+	if impact_left > 0:
+		draw_string(font,Vector2(550,270-impact_left*50) if impact_enemy else Vector2(210,365-impact_left*50),floating_text,HORIZONTAL_ALIGNMENT_LEFT,-1,30,Color("ffe0b0"))
 	draw_string(font,Vector2(432,180),str(SPECIES[int(enemy.species)].name)+"  Lv."+str(enemy.level),HORIZONTAL_ALIGNMENT_LEFT,-1,24,Color("f3e5c1"))
 	draw_rect(Rect2(432,196,260,12),Color("172b38"))
 	draw_rect(Rect2(432,196,260*float(enemy.hp)/float(enemy.max_hp),12),Color("86d3a2"))
 	draw_string(font,Vector2(432,235),"HP %d / %d" % [enemy.hp,enemy.max_hp],HORIZONTAL_ALIGNMENT_LEFT,-1,18)
+	if guardian_battle:
+		draw_string(font,Vector2(65,180),"守卫蓄力：下一回合重击！" if enemy_round % 3 == 2 else "守卫每三回合蓄力重击",HORIZONTAL_ALIGNMENT_LEFT,-1,17,Color("f4b797"))
 	draw_string(font,Vector2(70,560),"森 → 潮 → 焰 → 森   /   %s增强%s属性技" % ["高潮" if tide else "低潮", "潮" if tide else "焰"],HORIZONTAL_ALIGNMENT_LEFT,-1,20,Color("b0c6c7"))
 
 func setup_theme() -> void:
@@ -503,6 +560,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			if modal != null: close_modal()
 			else: show_pause()
 		elif event.physical_keycode == KEY_T and modal == null and mode == "explore": change_tide()
+		elif event.physical_keycode == KEY_E and modal == null and mode == "explore": rest()
 
 func close_modal() -> void:
 	if modal != null:
@@ -559,10 +617,22 @@ func modal_button(text: String, callback: Callable) -> void:
 	b.custom_minimum_size.y = 40
 	b.pressed.connect(callback)
 	modal_body.add_child(b)
-	if modal_body.get_child_count() == 3: b.grab_focus()
+	if not get_viewport().gui_get_focus_owner() or not modal.is_ancestor_of(get_viewport().gui_get_focus_owner()): b.grab_focus()
 
 func show_title() -> void:
-	open_modal("潮 汐 灵 约  /  T I D E B O U N D", "海水会记住每一次约定。\n探索三座岛屿，结识九种灵兽，点亮群岛最后的灯塔。\n\n原创单机短篇 · v0.2.0\n键鼠操作：WASD / 方向键移动，鼠标选择，T 改变潮相。")
+	open_modal("潮 汐 灵 约  /  T I D E B O U N D", "海水会记住每一次约定。\n探索三座岛屿，结识九种灵兽，点亮群岛最后的灯塔。\n\n原创单机短篇 · v0.3.0\n键鼠操作：WASD / 方向键移动，鼠标选择，T 改变潮相。")
+	var portraits := HBoxContainer.new()
+	portraits.alignment = BoxContainer.ALIGNMENT_CENTER
+	portraits.add_theme_constant_override("separation",36)
+	for id in [0,1,2]:
+		var portrait := TextureRect.new()
+		portrait.texture = preload("res://scripts/pixel_art.gd").portrait(id)
+		portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		portrait.custom_minimum_size = Vector2(84,78)
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		portraits.add_child(portrait)
+	modal_body.add_child(portraits)
 	if FileAccess.file_exists(SAVE_PATH): modal_button("继续旅程",close_modal)
 	modal_button("开始新的旅程",confirm_new_game)
 	modal_button("设置与操作说明",show_settings)
@@ -578,6 +648,8 @@ func confirm_new_game() -> void:
 
 func new_game() -> void:
 	if FileAccess.file_exists(SAVE_PATH): DirAccess.copy_absolute(SAVE_PATH,SAVE_PATH+".bak")
+	battle_id += 1
+	busy = false
 	party = [creature(0)]
 	reserve = []
 	known = [0]
@@ -586,6 +658,7 @@ func new_game() -> void:
 	zone = 0
 	completed = [false,false,false]
 	crystals = [0,0,0]
+	relics = [false,false,false,false,false,false]
 	fragments = 0
 	guardian_defeated = false
 	guardian_battle = false
@@ -612,11 +685,27 @@ func show_pause() -> void:
 	modal_button("保存并退出" if mode == "explore" else "退出（回到最近自动存档）",quit_game)
 
 func show_dex() -> void:
-	var text := "灵兽生态手记  ·  %d / 9 已建立契约\n\n" % discovered()
+	open_modal("群岛图鉴", "灵兽生态手记 · %d / 9 已建立契约。图鉴永久保留，营地储备中的灵兽也会记录。" % discovered())
+	var traits := ["共鸣技恢复 4 生命", "生命低于一半时伤害 +25%", "防御时恢复 4 生命", "共鸣技恢复 8 生命", "受到的伤害减少 2", "药草回复提高至 30", "对生命高于一半的对手，共鸣技 +20%", "普通攻击恢复 2 点潮息", "共鸣技同时抵御下一次攻击"]
 	for id in range(SPECIES.size()):
 		var owned := known.has(id)
-		text += "%02d  %s  [%s]  ·  %s\n%s\n\n" % [id+1,SPECIES[id].name,TYPES[int(SPECIES[id].type)],"已结识" if owned else "未建立契约",SPECIES[id].lore if owned else "栖息地："+str(ISLANDS[int(id/3)].name)+"。低潮与高潮出现的灵兽不同。"]
-	open_modal("群岛图鉴",text)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation",15)
+		var portrait := TextureRect.new()
+		portrait.texture = preload("res://scripts/pixel_art.gd").portrait(id)
+		portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		portrait.custom_minimum_size = Vector2(70,80)
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		if not owned: portrait.modulate = Color(0.18,0.25,0.29,1)
+		row.add_child(portrait)
+		var description := Label.new()
+		description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		description.custom_minimum_size.x = 550
+		description.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		description.text = "%02d  %s  [%s] · %s\n%s\n%s" % [id+1,SPECIES[id].name,TYPES[int(SPECIES[id].type)],"已结识" if owned else "未建立契约",SPECIES[id].lore if owned else "栖息地："+str(ISLANDS[int(id/3)].name)+"。两种潮相会遇到不同灵兽。",str(SPECIES[id].skill)+" / "+traits[id] if owned else "结识后解锁特性记录。"]
+		row.add_child(description)
+		modal_body.add_child(row)
 	modal_button("返回旅程",close_modal)
 
 func show_settings() -> void:
@@ -629,6 +718,11 @@ func show_settings() -> void:
 	slider.custom_minimum_size.y = 30
 	slider.value_changed.connect(func(value: float): volume=value; audio.set_volume(value); save_settings())
 	modal_body.add_child(slider)
+	var motion_toggle := CheckButton.new()
+	motion_toggle.text = "减少动态效果（关闭晃动与待机浮动）"
+	motion_toggle.button_pressed = reduce_motion
+	motion_toggle.toggled.connect(func(value: bool): reduce_motion=value; save_settings())
+	modal_body.add_child(motion_toggle)
 	modal_button("切换全屏 / 窗口",toggle_fullscreen)
 	modal_button("返回旅程",close_modal)
 
@@ -640,12 +734,14 @@ func toggle_fullscreen() -> void:
 func save_settings() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("audio","volume",volume)
+	cfg.set_value("accessibility","reduce_motion",reduce_motion)
 	cfg.set_value("display","fullscreen",DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN)
 	cfg.save("user://settings.cfg")
 
 func load_settings() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load("user://settings.cfg") == OK:
+		reduce_motion = bool(cfg.get_value("accessibility","reduce_motion",false))
 		volume = clampf(float(cfg.get_value("audio","volume",0.65)),0,1)
 		if bool(cfg.get_value("display","fullscreen",false)) and DisplayServer.get_name() != "headless": DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	audio.set_volume(volume)
@@ -679,6 +775,9 @@ func travel(destination: int) -> void:
 
 func quit_game() -> void:
 	if mode == "explore": save_game(false)
+	audio.music.stop()
+	audio.effects.stop()
+	await get_tree().create_timer(0.15).timeout
 	get_tree().quit()
 
 func valid_creature(p: Variant) -> bool:
@@ -695,7 +794,7 @@ func show_roster() -> void:
 	open_modal("营地 · 同伴编队", "当前队伍 %d / 6，储备 %d / 50。\n点击储备灵兽与当前出战同伴交换；未满六只时会直接加入队伍。" % [party.size(),reserve.size()])
 	for i in range(reserve.size()):
 		var p: Dictionary = reserve[i]
-		modal_button("%s  Lv.%d  [%s]" % [SPECIES[int(p.species)].name,p.level,TYPES[int(SPECIES[int(p.species)].type)]],withdraw.bind(i))
+		modal_button("%s  Lv.%d  [%s]" % [SPECIES[int(p.species)].name,p.level,TYPES[int(SPECIES[int(p.species)].type)]],inspect_reserve.bind(i))
 	if reserve.is_empty():
 		var text := Label.new()
 		text.text = "暂无储备灵兽。队伍满员后，新的同伴会在这里等你。"
@@ -723,6 +822,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif event.button_index == JOY_BUTTON_Y: rest()
 
 func obstacle_tiles() -> Array:
+	if zone == 1: return [Vector2i(2,2),Vector2i(3,2),Vector2i(4,3),Vector2i(8,2),Vector2i(9,2),Vector2i(13,8),Vector2i(14,8),Vector2i(3,9)]
+	if zone == 2: return [Vector2i(2,2),Vector2i(3,2),Vector2i(8,8),Vector2i(9,8),Vector2i(13,3),Vector2i(14,3),Vector2i(3,8),Vector2i(4,8)]
 	return [Vector2i(3,2),Vector2i(4,2),Vector2i(3,3),Vector2i(8,1),Vector2i(9,1),Vector2i(13,3),Vector2i(14,3),Vector2i(16,5),Vector2i(4,8),Vector2i(3,8),Vector2i(2,9)]
 
 func draw_tree(pos: Vector2, variant: int) -> void:
@@ -733,3 +834,35 @@ func draw_tree(pos: Vector2, variant: int) -> void:
 	draw_rect(Rect2(pos+Vector2(-13,-28),Vector2(8,13)),leaf.lightened(0.17))
 	draw_rect(Rect2(pos+Vector2(8,-18),Vector2(9,15)),leaf.darkened(0.15))
 	if variant == 1: draw_rect(Rect2(pos+Vector2(-2,-29),Vector2(4,7)),Color("e9d99b"))
+
+func relic_position(index: int) -> Vector2i:
+	var positions := [[Vector2i(7,2),Vector2i(14,8)],[Vector2i(6,8),Vector2i(13,1)],[Vector2i(6,3),Vector2i(14,7)]]
+	return positions[zone][index]
+
+func find_relic() -> bool:
+	for i in range(2):
+		if relics[zone*2+i] or tide != i or player != relic_position(i): continue
+		relics[zone*2+i] = true
+		seals += 3
+		for p in party: p.hp = mini(int(p.max_hp),int(p.hp)+12)
+		var stories := ["潮碑上写着：约定并非束缚，而是允许彼此自由地归来。","旧日的航图画着九种灵兽。它们曾共同守护这片海。","雾里的钟声由灯蕨鹿传递，迷途者才能找到海岸。","小鲸的歌声藏着一座岛的名字。你在石缝中找到三张完好的契约符。","守灯人最后的笔记：即使无人看见，灯也应该亮着。","最后一块潮碑没有文字，只有一圈圈向外扩散的涟漪。"]
+		message = "发现潮汐石碑：契约符 +3，全队恢复 12 生命。"
+		audio.sfx("bell")
+		save_game(false)
+		show_story(stories[zone*2+i])
+		return true
+	return false
+
+func inspect_reserve(index: int) -> void:
+	if index < 0 or index >= reserve.size(): return
+	var p: Dictionary = reserve[index]
+	open_modal(str(SPECIES[int(p.species)].name), "Lv.%d · 生命 %d / %d\n%s" % [p.level,p.hp,p.max_hp,SPECIES[int(p.species)].lore])
+	modal_button("加入队伍 / 交换出战同伴",withdraw.bind(index))
+	modal_button("解除契约（图鉴记录保留）",confirm_release.bind(index))
+	modal_button("返回营地",show_roster)
+
+func confirm_release(index: int) -> void:
+	if index < 0 or index >= reserve.size(): return
+	open_modal("让同伴回到海风里", "确认与 %s 解除契约？这只灵兽将回到野外，图鉴记录会保留。" % SPECIES[int(reserve[index].species)].name)
+	modal_button("确认解除",func(): reserve.remove_at(index); save_game(false); refresh(); show_roster())
+	modal_button("保持契约",show_roster)
