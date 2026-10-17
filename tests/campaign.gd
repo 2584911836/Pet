@@ -25,7 +25,9 @@ func run() -> void:
 				game.travel(game.zone+1)
 				game.close_modal()
 			# Choose the most effective healthy companion at camp.
-			var target: int = game.ISLANDS[game.zone].boss if game.fragments >= 3 else game.zone*3+game.rng.randi_range(0,2)
+			game.area = battles%3
+			game.tide = battles%2
+			var target: int = game.ISLANDS[game.zone].boss if game.fragments >= 3 else game.pick_encounter()
 			var best := -1.0
 			for i in range(game.party.size()):
 				var p: Dictionary = game.party[i]
@@ -54,6 +56,8 @@ func run() -> void:
 		total_battles += battles
 		if game.completed.count(true) < 3: failed_seeds.append(seed_value)
 		print("CAMPAIGN seed=%d beacons=%d battles=%d dex=%d" % [seed_value,game.completed.count(true),battles,game.discovered()])
+	game.audio.shutdown()
+	await create_timer(0.2).timeout
 	game.queue_free()
 	await process_frame
 	await create_timer(0.15).timeout

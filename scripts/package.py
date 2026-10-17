@@ -6,7 +6,7 @@ import sys
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = sys.argv[1] if len(sys.argv) > 1 else '0.3.0'
+VERSION = sys.argv[1] if len(sys.argv) > 1 else '0.4.0'
 OUT = ROOT / 'build' / 'releases'
 OUT.mkdir(parents=True, exist_ok=True)
 

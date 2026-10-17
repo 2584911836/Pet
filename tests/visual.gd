@@ -11,18 +11,38 @@ func capture(name: String) -> void:
 	if result != OK: quit(1)
 
 func run() -> void:
+	DirAccess.make_dir_recursive_absolute("res://build")
 	root.size = Vector2i(1152,720)
 	var game = load("res://main.tscn").instantiate()
 	root.add_child(game)
 	game.set_process(false)
-	await capture("title-v0.3")
+	await capture("title-v0.4")
 	game.close_modal()
 	game.refresh()
-	await capture("explore-v0.3")
+	await capture("explore-v0.4")
+	game.tide = 1
 	game.start_battle(2)
-	await capture("battle-v0.3")
+	await capture("battle-v0.4")
 	game.show_settings()
-	await capture("settings-v0.3")
+	await capture("settings-v0.4")
+	game.close_modal()
+	game.turn("flee")
+	game.open_dex()
+	await capture("dex-v0.4")
+	game.show_pet_detail(107)
+	await capture("pet-detail-v0.4")
+	game.close_modal()
+	game.show_world_map()
+	await capture("map-v0.4")
+	game.show_character()
+	await capture("character-v0.4")
+	game.show_title()
+	for view in [Vector2i(1280,720),Vector2i(1024,768),Vector2i(1920,1080)]:
+		root.size = view
+		await capture("title-v0.4-%dx%d" % [view.x,view.y])
+	game.audio.shutdown()
+	await create_timer(0.2).timeout
 	game.queue_free()
 	await process_frame
+	await create_timer(0.2).timeout
 	quit()

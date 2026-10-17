@@ -155,6 +155,8 @@ func run() -> void:
 	check(game.zone == 2 and game.message.contains("备份"), "broken save recovers validated backup")
 	game.save_game(false)
 	await process_frame
+	game.audio.shutdown()
+	await create_timer(0.2).timeout
 	game.queue_free()
 	await process_frame
 	await create_timer(0.15).timeout

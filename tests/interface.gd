@@ -91,7 +91,33 @@ func run() -> void:
 	game.load_game()
 	check(game.relics[0],"relic discovery persists through save")
 	game.show_dex()
-	check(game.modal_body.get_child_count() >= 12,"dex displays nine creature cards")
+	var has_grid := false
+	for child in game.modal_body.get_children():
+		if child is GridContainer and child.get_child_count() == 9: has_grid = true
+	check(has_grid,"dex displays nine paginated creature cards")
+	game.close_modal()
+	game.completed = [true,true,true]
+	game.visit_region(2,2)
+	check(game.zone == 2 and game.area == 2,"world map visits ninth region")
+	var pool: Array = game.encounter_pool()
+	check(pool.size() >= 5,"current region has a populated encounter pool")
+	game.save_game(false)
+	game.area = 0
+	game.load_game()
+	check(game.area == 2,"region location persists")
+	game.show_character()
+	check(game.modal_body.get_child(0).text.contains("洛汐"),"protagonist profile opens")
+	game.close_modal()
+	game.animations_enabled = false
+	game.party = [game.creature(0,99)]
+	game.active = 0
+	game.start_battle(107)
+	game.enemy.hp = 1
+	game.turn("soothe")
+	check(game.enemy.hp == 1 and game.mode == "battle","soothe is nonlethal even with overlevelled companion")
+	check(game.capture_chance() > 0.8,"low health exposes a high capture chance")
+	game.audio.shutdown()
+	await create_timer(0.2).timeout
 	game.queue_free()
 	await process_frame
 	await create_timer(0.15).timeout
