@@ -1,4 +1,4 @@
-# 潮汐灵约 / Tidebound · v0.5.0
+# 潮汐灵约 / Tidebound · v0.5.1
 
 Godot 4.6.3 原创怪物收集单机 RPG **可玩迭代版**。探索三座岛屿、九个生态区域，摇响潮铃改变潮相，结识 108 种灵兽，点亮三座灯塔。已有标题、配乐、战斗捕捉、成长、地图、图鉴、主角档案、储备与结局。
 
@@ -49,6 +49,7 @@ bash scripts/run.sh
 bash scripts/run.sh --headless --editor --quit
 bash scripts/test.sh           # 系统、UI、108 宠物目录与存档检查
 bash scripts/test.sh --full    # 再运行战斗进程与完整收藏模拟
+bash scripts/test.sh --journey # 新档真实按键/鼠标走完九区、108 收藏、灯塔及委托（约两分钟）
 python3 scripts/package.py 0.4.0
 ```
 
@@ -75,3 +76,5 @@ python3 scripts/package.py 0.4.0
 ![回合战斗](docs/previews/battle-v0.5.png)
 
 ![108 种灵兽图集](docs/previews/all-pets-v0.5.png)
+
+另有新档端到端验证：真实移动与 GUI 点击，在 10 倍模拟时间下完成 108 图鉴、三灯塔、三生态委托，两次均完成 155 场遭遇、663–667 次战斗操作、779–792 步，零全队倒下。未直接修改生命、等级或任务进度；该结果仍不能代替真人游戏性评价。

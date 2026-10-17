@@ -17,3 +17,8 @@ if [[ "${1:-}" == "--full" ]]; then
   XDG_DATA_HOME="$test_home/campaign-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 60s godot --headless --path "$project_dir" --script res://tests/campaign.gd
   XDG_DATA_HOME="$test_home/collection-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 60s godot --headless --path "$project_dir" --script res://tests/collection.gd
 fi
+
+if [[ "${1:-}" == "--journey" ]]; then
+  mkdir -p "$test_home/journey-data"
+  XDG_DATA_HOME="$test_home/journey-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 200s godot --headless --path "$project_dir" --script res://tests/journey.gd
+fi

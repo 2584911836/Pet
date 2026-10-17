@@ -694,7 +694,7 @@ func modal_button(text: String, callback: Callable) -> void:
 	if not get_viewport().gui_get_focus_owner() or not modal.is_ancestor_of(get_viewport().gui_get_focus_owner()): b.grab_focus()
 
 func show_title() -> void:
-	open_modal("潮 汐 灵 约", "T I D E B O U N D   /   v0.5.0\n\n海水会记住每一次约定。\n三座岛屿 · 九片生态区 · 108 种灵兽\nWASD 移动 · T 潮铃 · Esc 菜单")
+	open_modal("潮 汐 灵 约", "T I D E B O U N D   /   v0.5.1\n\n海水会记住每一次约定。\n三座岛屿 · 九片生态区 · 108 种灵兽\nWASD 移动 · T 潮铃 · Esc 菜单")
 	audio.play_track("title")
 	var shade: ColorRect = modal.get_child(0)
 	shade.color = Color(0.02,0.05,0.1,0.16)
