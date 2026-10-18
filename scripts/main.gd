@@ -1,5 +1,10 @@
 extends Node2D
 
+const BattleLog = preload("res://scripts/battle_log.gd")
+var battle_log := BattleLog.new()
+var last_battle_report: Dictionary = {}
+var battle_capture_id := -1
+
 const Surveys = preload("res://scripts/surveys.gd")
 const Growth = preload("res://scripts/progression.gd")
 const Layout = preload("res://scripts/world_layout.gd")
@@ -145,14 +150,7 @@ func build_ui() -> void:
 		meter.size = Vector2(310,12)
 		meter.show_percentage = false
 		meter.mouse_filter = Control.MOUSE_FILTER_PASS
-		var fill := StyleBoxFlat.new()
-		fill.bg_color = Color("8ac49c") if kind == 0 else Color("d7b76b")
-		fill.set_corner_radius_all(5)
-		var background := StyleBoxFlat.new()
-		background.bg_color = Color("10232f")
-		background.set_corner_radius_all(5)
-		meter.add_theme_stylebox_override("fill",fill)
-		meter.add_theme_stylebox_override("background",background)
+		style_meter(meter,Color("8ac49c") if kind == 0 else Color("d7b76b"))
 		add_child(meter)
 		if kind == 0: health_meter = meter
 		else: experience_meter = meter
@@ -168,8 +166,19 @@ func build_ui() -> void:
 	log_label.position = Vector2(40, 621)
 	log_label.size = Vector2(710, 80)
 	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	log_label.add_theme_font_size_override("font_size", 18)
+	log_label.add_theme_font_size_override("font_size", 17)
+	log_label.max_lines_visible = 3
 	add_child(log_label)
+
+func style_meter(meter: ProgressBar, color: Color) -> void:
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = color
+	fill.set_corner_radius_all(5)
+	var background := StyleBoxFlat.new()
+	background.bg_color = Color("10232f")
+	background.set_corner_radius_all(5)
+	meter.add_theme_stylebox_override("fill",fill)
+	meter.add_theme_stylebox_override("background",background)
 
 func add_button(caption: String, action: Callable) -> void:
 	var b := Button.new()
@@ -270,6 +279,7 @@ func refresh() -> void:
 			elif child is Button and child.text.begins_with("安抚"): child.disabled = busy or focus <= 0
 	else:
 		add_button("在营地休息 [E]", rest)
+		if not last_battle_report.is_empty(): add_button("上场战斗 / 经验与奖励",show_battle_report)
 		add_button("宠物背包 / 等级与成长", show_backpack)
 		add_button("与身边的人交谈 [R]", interact_nearby)
 		add_button("任务日志 / 追踪目标 [J]",show_quest_journal)
@@ -370,6 +380,8 @@ func start_battle(id: int, guardian: bool = false) -> void:
 	mode = "battle"
 	guardian_battle = guardian
 	enemy = creature(id, int(ISLANDS[zone].level) if guardian else rng.randi_range(1+zone*2+area, 2+zone*2+area))
+	battle_log.begin(party,active,"地区资格赛" if guardian else "野外遭遇",id)
+	battle_capture_id = -1
 	focus = 3
 	enemy_round = 0
 	enemy_focus = 3
@@ -403,6 +415,8 @@ func turn(action: String) -> void:
 	guarding = false
 	match action:
 		"flee":
+			battle_log.action("flee")
+			last_battle_report = battle_log.finish(party,"安全撤退")
 			mode = "explore"
 			audio.play_track("island_"+str(zone))
 			message = "你安全撤回小径。"
@@ -418,6 +432,7 @@ func turn(action: String) -> void:
 				refresh()
 				return
 			seals -= 1
+			battle_log.action("capture")
 			var chance := capture_chance()
 			if rng.randf() < chance:
 				if animations_enabled:
@@ -431,6 +446,7 @@ func turn(action: String) -> void:
 					await get_tree().create_timer(0.55).timeout
 					if quitting or capture_battle != battle_id: return
 					busy = false
+				battle_capture_id = int(enemy.species)
 				if not known.has(int(enemy.species)): known.append(int(enemy.species))
 				if party.size() < 6: party.append(enemy.duplicate(true))
 				else: reserve.append(enemy.duplicate(true))
@@ -443,12 +459,14 @@ func turn(action: String) -> void:
 				refresh()
 				return
 			focus -= 1
+			battle_log.action("soothe")
 			enemy.hp = maxi(1,int(enemy.hp)-maxi(1,int(enemy.max_hp)/4))
 			message = "你以伙伴指令安抚对方，留下了捕捉伙伴的机会。"
 			impact_left = 0.42
 			impact_enemy = true
 			floating_text = "共鸣"
 		"guard":
+			battle_log.action("guard")
 			focus = mini(3, focus+1)
 			guarding = true
 			if int(s.trait) == 2: p.hp = mini(int(p.max_hp),int(p.hp)+4)
@@ -459,6 +477,7 @@ func turn(action: String) -> void:
 				refresh()
 				return
 			salves -= 1
+			battle_log.action("heal")
 			p.hp = mini(int(p.max_hp), int(p.hp)+(30 if int(s.trait) == 5 else 24))
 			message = "药草恢复了 24 点生命。"
 		_:
@@ -467,6 +486,7 @@ func turn(action: String) -> void:
 				refresh()
 				return
 			focus = focus-int(move.cost) if int(move.cost) > 0 else mini(3, focus+(2 if int(s.trait) == 7 else 1))
+			battle_log.action("move")
 			var element_mult := Elements.multiplier(int(move.element),e.elements)
 			var mult := float(move.scale)*element_mult
 			if int(s.trait) == 1 and int(p.hp)*2 < int(p.max_hp): mult *= 1.25
@@ -538,9 +558,11 @@ func enemy_turn() -> void:
 		for i in range(party.size()):
 			if int(party[i].hp) > 0:
 				active = i
+				battle_log.register(i)
 				message += " 同伴接替了战斗。"
 				refresh()
 				return
+		last_battle_report = battle_log.finish(party,"营地救援")
 		mode = "explore"
 		player = Vector2i(2, 6)
 		visual_player = Vector2(player)
@@ -552,6 +574,7 @@ func enemy_turn() -> void:
 	refresh()
 
 func finish_battle(text: String) -> void:
+	if mode != "battle" or battle_log.settled: return
 	if guardian_battle and opponent_slot+1 < opponent_roster.size():
 		opponent_slot += 1
 		enemy = opponent_roster[opponent_slot].duplicate(true)
@@ -564,13 +587,13 @@ func finish_battle(text: String) -> void:
 	audio.play_track("island_"+str(zone))
 	audio.sfx("win")
 	wins += 1
+	var points_earned := mini(3,fragments+1)-fragments
 	fragments = mini(3, fragments + 1)
 	crystals[zone] = fragments
-	var p: Dictionary = party[active]
-	var was_max_level := int(p.level) >= Growth.MAX_LEVEL
-	var gained := Growth.gain(p,1)
-	text += " 已达满级。" if was_max_level else " 训练经验 +1。"
-	if gained > 0: text += " %s 升至 Lv.%d，生命上限 +%d、基础战力 +%d，生命恢复！" % [SPECIES[int(p.species)].name,p.level,gained*6,gained*2]
+	var upgrades := battle_log.grant(party)
+	text += " 参战经验已结算。"
+	if not upgrades.is_empty(): text += " %d 名伙伴升级，生命恢复！" % upgrades.size()
+	var guidance: bool = guardian_battle and special_battle_kind.is_empty() and not completed[zone]
 	if guardian_battle:
 		if special_battle_kind.is_empty() and not completed[zone]:
 			guardian_defeated = true
@@ -594,19 +617,24 @@ func finish_battle(text: String) -> void:
 	elif special_battle_kind == "championship":
 		story_flags["champion"] = true
 		special_ending = Story.CHAMPION_END
+	last_battle_report = battle_log.finish(party,"捕捉成功" if battle_capture_id >= 0 else "战斗胜利",points_earned,guidance,battle_capture_id)
 	special_battle_kind = ""
-	message = text + " 获得 1 资格积分。"
+	message = text + (" 资格积分 +1。" if points_earned > 0 else " 本地区资格积分已满。")
 	save_game(false)
 	refresh()
 	if not special_ending.is_empty(): show_story(special_ending)
 	elif guardian_battle: show_story(str(Story.CHAPTERS[zone].ending))
 	elif collection_complete: show_story("你听见了地区所有的回声。108 种灵兽的名字，已经写进训练师的研究手记。\n\n称号解锁：图鉴大师\n每一次相遇，都让下一段旅程更值得期待。")
+	else: show_battle_report()
 
 func switch_to(index: int) -> void:
-	if busy or int(party[index].hp) <= 0: return
+	if busy or index < 0 or index >= party.size() or index == active or int(party[index].hp) <= 0: return
 	active = index
 	message = "出战灵兽已切换。"
-	if mode == "battle": enemy_turn()
+	if mode == "battle":
+		battle_log.register(index)
+		battle_log.action("switch")
+		enemy_turn()
 	else: refresh()
 
 func heal_party() -> void:
@@ -641,6 +669,8 @@ func save_game(notify: bool = true) -> void:
 		refresh()
 
 func load_game() -> void:
+	last_battle_report.clear()
+	battle_log = BattleLog.new()
 	if not FileAccess.file_exists(SAVE_PATH): return
 	var data := read_valid_save(SAVE_PATH)
 	var recovered := false
@@ -941,6 +971,8 @@ func confirm_new_game() -> void:
 	else: new_game()
 
 func new_game() -> void:
+	last_battle_report.clear()
+	battle_log = BattleLog.new()
 	if FileAccess.file_exists(SAVE_PATH): DirAccess.copy_absolute(SAVE_PATH,SAVE_PATH+".bak")
 	battle_id += 1
 	busy = false
@@ -976,6 +1008,7 @@ func new_game() -> void:
 func show_story(text: String) -> void:
 	open_modal(str(Story.CHAPTERS[zone].title),text)
 	modal_button("让旅程继续",close_modal)
+	if not last_battle_report.is_empty(): modal_button("查看上场战斗结算",show_battle_report)
 
 func show_pause() -> void:
 	open_modal("训练师行囊", "进度：%d / 3 枚地区徽章  ·  图鉴 %d / 108\n%s" % [completed.count(true),discovered(),ISLANDS[zone].subtitle])
@@ -1497,6 +1530,7 @@ func show_backpack(storage: bool = false, page: int = 0) -> void:
 		hp.max_value = p.max_hp
 		hp.value = p.hp
 		hp.show_percentage = false
+		style_meter(hp,Color("8ac49c"))
 		hp.custom_minimum_size.y = 8
 		hp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		content.add_child(hp)
@@ -1543,6 +1577,7 @@ func show_backpack_pet(storage: bool, index: int) -> void:
 	xp_bar.value = xp_bar.max_value if int(p.level) >= Growth.MAX_LEVEL else p.xp
 	xp_bar.custom_minimum_size.y = 14
 	xp_bar.show_percentage = false
+	style_meter(xp_bar,Color("d7b76b"))
 	xp_bar.tooltip_text = Growth.summary(p,int(species.power))
 	modal_body.add_child(xp_bar)
 	modal_button("战斗技能与生态档案",show_companion_skills.bind(storage,index))
@@ -1792,6 +1827,8 @@ func start_special_battle(kind: String) -> void:
 	else: return
 	start_battle(13 if kind == "rescue" else 68,true)
 	special_battle_kind = kind
+	battle_log.label = "父母救援" if kind == "rescue" else "冠军赛"
+	battle_log.opponents = [13,91] if kind == "rescue" else [68,8,102]
 	opponent_roster = [creature(13,8),creature(91,8)] if kind == "rescue" else [creature(68,9),creature(8,9),creature(102,9)]
 	opponent_slot = 0
 	enemy = opponent_roster[0].duplicate(true)
@@ -1840,7 +1877,7 @@ func enlarge_story_modal() -> void:
 
 func show_battle_party() -> void:
 	if mode != "battle" or busy: return
-	open_modal("选择出战伙伴", "换宠会消耗一个回合，对方会行动。取消不会消耗回合。\n本场能量和药草不会重置，倒下的伙伴不可出战。")
+	open_modal("选择出战伙伴", "换宠会消耗一个回合，对方会行动。取消不会消耗回合。\n本场能量和药草不会重置，倒下的伙伴不可出战。\n整场获胜或捕捉成功后，每名实际参战伙伴各得 1 点经验；未出战者不获常规经验。")
 	for index in range(party.size()):
 		var companion: Dictionary = party[index]
 		var species: Dictionary = SPECIES[int(companion.species)]
@@ -2013,3 +2050,54 @@ func draw_survey_marker() -> void:
 	if not recorded: draw_arc(pos,18,0,TAU,24,Color(0.95,0.82,0.51,0.5),1)
 	var font: Font = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
 	draw_string(font,pos+Vector2(-17,-24),"已记" if recorded else "调查",HORIZONTAL_ALIGNMENT_LEFT,-1,13,color)
+
+func show_battle_report() -> void:
+	if mode != "explore" or last_battle_report.is_empty(): return
+	var report := last_battle_report
+	var opponents: Array[String] = []
+	for id in report.opponents: opponents.append(str(SPECIES[int(id)].name))
+	var rewards := "资格积分 +%d" % report.points if int(report.points) > 0 else "资格积分未增加"
+	if int(report.captured) >= 0: rewards += " · 新伙伴："+str(SPECIES[int(report.captured)].name)
+	open_modal(str(report.outcome)+" · 成长结算",str(report.label)+" / "+"、".join(opponents)+"\n"+rewards+"\n完整战斗结束后结算一次，查看本页不会重复发奖。")
+	enlarge_story_modal()
+	var metrics := HBoxContainer.new()
+	metrics.add_theme_constant_override("separation",14)
+	for metric in ["有效行动 %d" % report.actions,"胶囊消耗 %d" % report.capsules,"药草消耗 %d" % report.herbs]:
+		var label := Label.new()
+		label.text = metric
+		label.add_theme_font_size_override("font_size",17)
+		metrics.add_child(label)
+	modal_body.add_child(metrics)
+	for row in report.rows:
+		var line := HBoxContainer.new()
+		line.add_theme_constant_override("separation",18)
+		var portrait := TextureRect.new()
+		portrait.texture = preload("res://scripts/pixel_art.gd").portrait(int(row.species))
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		portrait.custom_minimum_size = Vector2(86,86)
+		line.add_child(portrait)
+		var detail := VBoxContainer.new()
+		detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var caption := Label.new()
+		var growth := "Lv.%d → Lv.%d" % [row.before_level,row.level] if int(row.level) > int(row.before_level) else "Lv.%d" % row.level
+		caption.text = str(SPECIES[int(row.species)].name)+" · "+growth
+		caption.add_theme_font_size_override("font_size",20)
+		detail.add_child(caption)
+		var progress := Label.new()
+		progress.text = ("参战经验 +%d" % row.earned if bool(row.participated) else "未参战")+(" · 导师指导 +1 级" if bool(row.guidance) else "")
+		progress.text += " · 已满级" if int(row.level) >= Growth.MAX_LEVEL else " · 经验 %d/%d" % [row.xp,Growth.required(int(row.level))]
+		progress.add_theme_font_size_override("font_size",15)
+		detail.add_child(progress)
+		var bar := ProgressBar.new()
+		bar.max_value = Growth.required(int(row.level))
+		bar.value = bar.max_value if int(row.level) >= Growth.MAX_LEVEL else row.xp
+		bar.show_percentage = false
+		style_meter(bar,Color("d7b76b"))
+		bar.custom_minimum_size.y = 10
+		detail.add_child(bar)
+		line.add_child(detail)
+		modal_body.add_child(line)
+	modal_button("继续探索",close_modal)
+	modal_button("整理队伍与成长",show_backpack)
+	modal_button("查看下一步任务",show_quest_journal)
