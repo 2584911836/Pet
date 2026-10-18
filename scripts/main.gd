@@ -1,5 +1,10 @@
 extends Node2D
 
+const Growth = preload("res://scripts/progression.gd")
+const Layout = preload("res://scripts/world_layout.gd")
+var health_meter: ProgressBar
+var experience_meter: ProgressBar
+
 const Data = preload("res://scripts/game_data.gd")
 const Story = preload("res://scripts/story.gd")
 var story_flags: Dictionary = {}
@@ -133,6 +138,23 @@ func build_ui() -> void:
 	info.size = Vector2(325, 210)
 	info.add_theme_font_size_override("font_size", 19)
 	add_child(info)
+	for kind in range(2):
+		var meter := ProgressBar.new()
+		meter.position = Vector2(800,300+kind*20)
+		meter.size = Vector2(310,12)
+		meter.show_percentage = false
+		meter.mouse_filter = Control.MOUSE_FILTER_PASS
+		var fill := StyleBoxFlat.new()
+		fill.bg_color = Color("8ac49c") if kind == 0 else Color("d7b76b")
+		fill.set_corner_radius_all(5)
+		var background := StyleBoxFlat.new()
+		background.bg_color = Color("10232f")
+		background.set_corner_radius_all(5)
+		meter.add_theme_stylebox_override("fill",fill)
+		meter.add_theme_stylebox_override("background",background)
+		add_child(meter)
+		if kind == 0: health_meter = meter
+		else: experience_meter = meter
 	action_scroll = ScrollContainer.new()
 	action_scroll.position = Vector2(800, 338)
 	action_scroll.size = Vector2(315, 344)
@@ -142,8 +164,8 @@ func build_ui() -> void:
 	action_scroll.add_child(buttons)
 	buttons.add_theme_constant_override("separation", 9)
 	log_label = Label.new()
-	log_label.position = Vector2(40, 610)
-	log_label.size = Vector2(710, 95)
+	log_label.position = Vector2(40, 621)
+	log_label.size = Vector2(710, 80)
 	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	log_label.add_theme_font_size_override("font_size", 18)
 	add_child(log_label)
@@ -163,7 +185,16 @@ func add_button(caption: String, action: Callable) -> void:
 func update_status() -> void:
 	var p: Dictionary = party[active]
 	var s: Dictionary = SPECIES[int(p.species)]
-	info.text = "%s / %s\n捕捉胶囊 %d    资格积分 %d / 3\n图鉴 %d / 108    地区徽章 %d / 3\n\n%s  Lv.%d  [%s]\n生命 %d / %d    经验 %d / 3" % [AREAS[zone][area], "训练师旅程", seals, fragments, discovered(), completed.count(true), s.name, p.level, Elements.names(s.elements), p.hp, p.max_hp, p.xp]
+	info.text = "%s / %s\n捕捉胶囊 %d    资格积分 %d / 3\n图鉴 %d / 108    地区徽章 %d / 3\n%s  Lv.%d  [%s]\n生命 %d / %d    经验 %d / %d" % [AREAS[zone][area], "训练师旅程", seals, fragments, discovered(), completed.count(true), s.name, p.level, Elements.names(s.elements), p.hp, p.max_hp, p.xp, Growth.required(int(p.level))]
+	if int(p.level) >= Growth.MAX_LEVEL: info.text = info.text.replace("经验 %d / %d" % [p.xp,Growth.required(int(p.level))],"等级已满")
+	health_meter.visible = mode == "explore"
+	experience_meter.visible = mode == "explore"
+	health_meter.max_value = p.max_hp
+	health_meter.value = p.hp
+	health_meter.tooltip_text = "生命 %d / %d" % [p.hp,p.max_hp]
+	experience_meter.max_value = Growth.required(int(p.level))
+	experience_meter.value = experience_meter.max_value if int(p.level) == Growth.MAX_LEVEL else p.xp
+	experience_meter.tooltip_text = Growth.summary(p,int(s.power))
 	var objective: Dictionary = Story.objective(self)
 	journal = str(objective.step)+" · "+str(objective.progress)
 	quest_label.visible = mode == "explore"
@@ -171,7 +202,7 @@ func update_status() -> void:
 	subtitle_label.text = str(Story.CHAPTERS[zone].title)+"  /  "+str(AREAS[zone][area])+"  ·  M 地图  J 日志  R 交谈"
 	log_label.text = message if mode == "battle" else message+"\n"+journal
 	if mode == "explore":
-		info.add_theme_font_size_override("font_size",19)
+		info.add_theme_font_size_override("font_size",17)
 		observe_region()
 		update_guide()
 	else:
@@ -204,8 +235,8 @@ func refresh() -> void:
 			buttons.add_theme_constant_override("separation",9)
 		buttons.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		action_scroll.add_child(buttons)
-	action_scroll.position = Vector2(792,320) if battle_layout else Vector2(800,338)
-	action_scroll.size = Vector2(332,362) if battle_layout else Vector2(315,344)
+	action_scroll.position = Vector2(792,320) if battle_layout else Vector2(800,350)
+	action_scroll.size = Vector2(332,362) if battle_layout else Vector2(315,332)
 	action_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	for child in buttons.get_children():
 		buttons.remove_child(child)
@@ -235,7 +266,7 @@ func refresh() -> void:
 			elif child is Button and child.text.begins_with("安抚"): child.disabled = busy or focus <= 0
 	else:
 		add_button("在营地休息 [E]", rest)
-		add_button("宠物背包 / 队伍与后备", show_backpack)
+		add_button("宠物背包 / 等级与成长", show_backpack)
 		add_button("与身边的人交谈 [R]", interact_nearby)
 		add_button("任务日志 / 追踪目标 [J]",show_quest_journal)
 		add_button("本区地形 / 路线 [M]",show_local_map)
@@ -279,6 +310,7 @@ func _process(delta: float) -> void:
 	move_player(d)
 
 func is_grass(p: Vector2i) -> bool:
+	if Layout.path_tile(zone,area,p) or Layout.water(zone,area,p): return false
 	if area == 1: return (p.x >= 4 and p.x <= 9 and p.y >= 1 and p.y <= 4) or (p.x >= 12 and p.y >= 6)
 	if area == 2: return (p.x >= 5 and p.x <= 9 and p.y >= 6) or (p.x >= 12 and p.x <= 16 and p.y <= 4)
 	if zone == 1: return (p.x >= 4 and p.x <= 8 and p.y >= 6 and p.y <= 9) or (p.x >= 12 and p.x <= 16 and p.y <= 4)
@@ -287,7 +319,12 @@ func is_grass(p: Vector2i) -> bool:
 	return (p.x >= 5 and p.x <= 10 and p.y >= 3 and p.y <= 8) or (p.x >= 13 and p.y >= 6)
 
 func move_player(d: Vector2i) -> void:
+	if mode != "explore" or busy or abs(d.x)+abs(d.y) != 1: return
 	var target := player + d
+	var destination := exit_destination(target)
+	if destination >= 0:
+		cross_region_exit(destination)
+		return
 	if not is_land(target): return
 	if target == Vector2i(3,4):
 		talk_keeper()
@@ -524,14 +561,10 @@ func finish_battle(text: String) -> void:
 	fragments = mini(3, fragments + 1)
 	crystals[zone] = fragments
 	var p: Dictionary = party[active]
-	p.xp = int(p.xp) + 1
-	if int(p.xp) >= 3:
-		p.xp = 0
-		if int(p.level) < 99:
-			p.level = int(p.level)+1
-			p.max_hp = int(p.max_hp)+6
-			p.hp = p.max_hp
-			text += " 同伴升级，生命恢复！"
+	var was_max_level := int(p.level) >= Growth.MAX_LEVEL
+	var gained := Growth.gain(p,1)
+	text += " 已达满级。" if was_max_level else " 训练经验 +1。"
+	if gained > 0: text += " %s 升至 Lv.%d，生命上限 +%d、基础战力 +%d，生命恢复！" % [SPECIES[int(p.species)].name,p.level,gained*6,gained*2]
 	if guardian_battle:
 		if special_battle_kind.is_empty() and not completed[zone]:
 			guardian_defeated = true
@@ -540,6 +573,7 @@ func finish_battle(text: String) -> void:
 				if int(companion.level) < 99:
 					companion.level += 1
 					companion.max_hp += 6
+					if int(companion.level) == Growth.MAX_LEVEL: companion.xp = 0
 			text += " 导师指导：全队等级 +1。"
 		text += " 训练师挑战获胜！"
 		heal_party()
@@ -684,25 +718,12 @@ func _draw() -> void:
 	if mode == "battle":
 		draw_battle()
 		return
-	for y in range(11):
-		for x in range(18):
-			var pos := ORIGIN + Vector2(x,y)*TILE
-			var border := not is_land(Vector2i(x,y))
-			draw_rect(Rect2(pos,Vector2(TILE,TILE)),(Color("263f37") if zone == 0 else Color("503c36") if zone == 1 else Color("29394c")) if border else ISLANDS[zone].grass if is_grass(Vector2i(x,y)) else ISLANDS[zone].ground.lightened(area*0.055))
-			if border:
-				draw_rect(Rect2(pos+Vector2(6,9),Vector2(14,8)),Color("3b5043") if zone != 1 else Color("6a5145"))
-				draw_rect(Rect2(pos+Vector2(22,25),Vector2(10,7)),Color("32463c") if zone != 1 else Color("60483f"))
-			elif is_grass(Vector2i(x,y)):
-				WorldArt.draw_object(self,1,pos+Vector2(20,39),Vector2(36,30))
-			elif (x*3+y*7)%4 == 0:
-				draw_rect(Rect2(pos+Vector2(8,12),Vector2(3,2)),Color(0.3,0.4,0.3,0.16))
-	# Worn paths, shore stones, and island-specific foliage.
-	for x in range(1,17):
-		draw_rect(Rect2(ORIGIN+Vector2(x,5)*TILE+Vector2(0,9),Vector2(40,22)),Color("c5b797"))
-	for y in range(2,6): draw_rect(Rect2(ORIGIN+Vector2(15,y)*TILE+Vector2(9,0),Vector2(22,40)),Color("c5b797"))
+	Layout.ground(self,self)
 	for tile in obstacle_tiles():
 		if area > 0 and tile == field_npc_position(): continue
+		if tile in Layout.structure_tiles(zone,area): continue
 		if is_land(tile): draw_tree(ORIGIN+Vector2(tile)*TILE+Vector2(20,23),zone)
+	Layout.buildings(self,self)
 	for y in range(1,10):
 		for x in range(1,17):
 			if (x*7+y*13+zone)%17 == 0 and not is_grass(Vector2i(x,y)) and x != 11 and is_land(Vector2i(x,y)):
@@ -718,17 +739,12 @@ func _draw() -> void:
 			var glow := 3+sin(walk_time*4)*2
 			WorldArt.draw_object(self,7,relic_pos+Vector2(0,20),Vector2(29,38))
 			draw_circle(relic_pos+Vector2(0,-glow),2,Color("d7fff0"))
-	# Camp and ancient beacon.
+	draw_region_exits()
+	# Camp and qualification arena.
 	var camp := ORIGIN + Vector2(2,5)*TILE
 	WorldArt.draw_object(self,3,camp+Vector2(20,40),Vector2(62,47))
 	WorldArt.draw_object(self,6,camp+Vector2(53,38),Vector2(16,28))
-	var arena := ORIGIN+Vector2(15,2)*TILE
-	draw_rect(Rect2(arena+Vector2(-16,-10),Vector2(72,58)),Color("425a69"))
-	draw_rect(Rect2(arena+Vector2(-10,-4),Vector2(60,46)),Color("e5d8b3"))
-	draw_rect(Rect2(arena+Vector2(10,13),Vector2(20,29)),Color("3a6875"))
-	for offset in [-12,45]:
-		draw_line(arena+Vector2(offset,-9),arena+Vector2(offset,-33),Color("ece1be"),2)
-		draw_colored_polygon(PackedVector2Array([arena+Vector2(offset,-33),arena+Vector2(offset+14,-28),arena+Vector2(offset,-22)]),Color("dc9482") if area == 2 and zone == 2 else Color("8cc9af"))
+	Layout.landmark(self,self)
 	var map_font: Font = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
 	draw_string(map_font,ORIGIN+Vector2(54,193),"营地",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("fff0c6"))
 	draw_string(map_font,ORIGIN+Vector2(580,64),"研究站" if zone == 2 and area == 2 else "赛场" if area == 0 else "巡查站",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("fff0c6"))
@@ -1115,7 +1131,7 @@ func valid_creature(p: Variant) -> bool:
 	if not p is Dictionary: return false
 	for key in ["species","level","hp","max_hp","xp"]:
 		if not p.has(key) or not (p[key] is int or p[key] is float): return false
-	return int(p.species) >= 0 and int(p.species) < PET_COUNT and int(p.level) >= 1 and int(p.level) <= 99 and int(p.max_hp) > 0 and int(p.max_hp) <= 1000 and int(p.hp) >= 0 and int(p.hp) <= int(p.max_hp) and int(p.xp) >= 0 and int(p.xp) < 3
+	return int(p.species) >= 0 and int(p.species) < PET_COUNT and int(p.level) >= 1 and int(p.level) <= 99 and int(p.max_hp) > 0 and int(p.max_hp) <= 1000 and int(p.hp) >= 0 and int(p.hp) <= int(p.max_hp) and int(p.xp) >= 0 and int(p.xp) < Growth.required(int(p.level))
 
 func show_roster() -> void:
 	if mode != "explore" or player.distance_to(Vector2i(2,5)) > 1:
@@ -1160,6 +1176,17 @@ func obstacle_tiles() -> Array:
 	if zone == 1: tiles = [Vector2i(2,2),Vector2i(3,2),Vector2i(4,3),Vector2i(8,2),Vector2i(9,2),Vector2i(13,8),Vector2i(14,8),Vector2i(3,9)]
 	elif zone == 2: tiles = [Vector2i(2,2),Vector2i(3,2),Vector2i(8,8),Vector2i(9,8),Vector2i(13,3),Vector2i(14,3),Vector2i(3,8),Vector2i(4,8)]
 	else: tiles = [Vector2i(3,2),Vector2i(4,2),Vector2i(3,3),Vector2i(8,1),Vector2i(9,1),Vector2i(13,3),Vector2i(14,3),Vector2i(16,5),Vector2i(4,8),Vector2i(3,8),Vector2i(2,9)]
+	if area == 0:
+		for base in [Vector2i(5,2),Vector2i(9,2),Vector2i(5,8)]:
+			tiles = tiles.filter(func(tile): return not Rect2i(base-Vector2i(2,2),Vector2i(4,4)).has_point(tile))
+			for dx in [-1,0]:
+				for dy in [-1,0]:
+					var tile: Vector2i = base+Vector2i(dx,dy)
+					if not Layout.protected_tile(tile) and tile not in tiles: tiles.append(tile)
+	for structure in Layout.structure_tiles(zone,area):
+		if structure not in tiles: tiles.append(structure)
+	# Keep the road network clear, including every portal approach.
+	tiles = tiles.filter(func(tile): return not Layout.corridor(tile))
 	if area > 0: tiles.append(field_npc_position())
 	return tiles
 
@@ -1280,7 +1307,7 @@ func show_world_map() -> void:
 	chart.build_nodes()
 	modal_button("返回旅程",close_modal)
 
-func visit_region(island: int, region: int) -> void:
+func visit_region(island: int, region: int, arrival: Vector2i = Vector2i(2,6)) -> void:
 	if mode != "explore" or island < 0 or island > 2 or region < 0 or region > 2: return
 	if not region_unlocked(island): return
 	crystals[zone] = fragments
@@ -1288,7 +1315,7 @@ func visit_region(island: int, region: int) -> void:
 	area = region
 	fragments = int(crystals[zone])
 	guardian_defeated = bool(completed[zone])
-	player = Vector2i(2,6)
+	player = arrival
 	visual_player = Vector2(player)
 	companion_target = Vector2(player)+Vector2(0,1)
 	companion_visual = companion_target
@@ -1321,6 +1348,8 @@ func _exit_tree() -> void:
 	WorldArt.cache.clear()
 
 func is_land(point: Vector2i) -> bool:
+	if exit_destination(point) >= 0: return true
+	if Layout.water(zone,area,point): return false
 	if point.x < 1 or point.x > 16 or point.y < 1 or point.y > 9: return false
 	if point.y == 1 and (point.x < 3 or point.x > 14): return false
 	if point.y == 2 and point.x == 1: return false
@@ -1451,7 +1480,7 @@ func show_backpack(storage: bool = false, page: int = 0) -> void:
 		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		content.add_child(portrait)
 		var label := Label.new()
-		label.text = "%s  Lv.%d%s\n生命 %d / %d" % [species.name,p.level," · 出战" if not storage and i == active else "",p.hp,p.max_hp]
+		label.text = "%s  Lv.%d%s\n生命 %d / %d · EXP %d/%d" % [species.name,p.level," · 出战" if not storage and i == active else "",p.hp,p.max_hp,p.xp,Growth.required(int(p.level))]
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override("font_size",15)
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1490,7 +1519,8 @@ func show_backpack_pet(storage: bool, index: int) -> void:
 	if index < 0 or index >= pets.size(): return
 	var p: Dictionary = pets[index]
 	var species: Dictionary = SPECIES[int(p.species)]
-	open_modal(str(species.name), "Lv.%d · [%s] · 生命 %d / %d · 经验 %d / 3\n技能：%s\n%s" % [p.level,Elements.names(species.elements),p.hp,p.max_hp,p.xp,Moves.catalogue(species),species.lore])
+	open_modal(str(species.name), "[%s] · 生命 %d / %d\n%s" % [Elements.names(species.elements),p.hp,p.max_hp,Growth.summary(p,int(species.power))])
+	modal_body.get_child(1).add_theme_font_size_override("font_size",16)
 	var panel: PanelContainer = modal.get_child(1)
 	panel.position.y = 20
 	panel.size.y = 680
@@ -1500,6 +1530,14 @@ func show_backpack_pet(storage: bool, index: int) -> void:
 	image.texture = preload("res://scripts/pixel_art.gd").portrait(int(p.species))
 	image.custom_minimum_size.y = 130
 	modal_body.add_child(image)
+	var xp_bar := ProgressBar.new()
+	xp_bar.max_value = Growth.required(int(p.level))
+	xp_bar.value = xp_bar.max_value if int(p.level) >= Growth.MAX_LEVEL else p.xp
+	xp_bar.custom_minimum_size.y = 14
+	xp_bar.show_percentage = false
+	xp_bar.tooltip_text = Growth.summary(p,int(species.power))
+	modal_body.add_child(xp_bar)
+	modal_button("战斗技能与生态档案",show_companion_skills.bind(storage,index))
 	if not storage:
 		modal_button("当前出战" if index == active else "设为出战伙伴",backpack_select.bind(index))
 		modal_body.get_child(modal_body.get_child_count()-1).disabled = index == active or int(p.hp) <= 0
@@ -1686,8 +1724,9 @@ func update_guide() -> void:
 	var goal: String = str(objective.goal) if tracked_goal == "main" else tracked_goal
 	var target := Vector2i(15,2) if goal == "arena" else Vector2i(2,6)
 	if tracked_goal == "main" and (int(objective.zone) != zone or int(objective.area) != area):
-		goal = "camp"
-		target = Vector2i(2,6)
+		var next_region := next_region_toward(int(objective.zone)*3+int(objective.area))
+		goal = "exit"
+		target = region_exit_tile(next_region) if next_region >= 0 else Vector2i(2,6)
 	elif goal == "field" and area > 0: target = field_npc_position()+Vector2i.RIGHT
 	var queue: Array[Vector2i] = [player]
 	var previous: Dictionary = {player:player}
@@ -1791,3 +1830,88 @@ func select_battle_party(index: int) -> void:
 	if mode != "battle" or busy or index < 0 or index >= party.size() or index == active or int(party[index].hp) <= 0: return
 	close_modal()
 	switch_to(index)
+
+# Edge gates share the world map graph. Entering a gate transfers on foot.
+func region_exit_tile(destination: int) -> Vector2i:
+	var here := zone*3+area
+	if destination not in connected_regions(here): return Vector2i(-1,-1)
+	if int(destination/3) < zone: return Vector2i(0,5)
+	if int(destination/3) > zone: return Vector2i(17,5)
+	var next_area := destination%3
+	if area == 0: return Vector2i(11,0) if next_area == 1 else Vector2i(17,5)
+	if area == 1: return Vector2i(11,10) if next_area == 0 else Vector2i(17,5)
+	return Vector2i(0,5) if next_area == 0 else Vector2i(11,0)
+
+func exit_destination(tile: Vector2i) -> int:
+	if tile.x > 0 and tile.x < 17 and tile.y > 0 and tile.y < 10: return -1
+	for destination in connected_regions(zone*3+area):
+		if region_exit_tile(destination) == tile: return destination
+	return -1
+
+func cross_region_exit(destination: int) -> void:
+	if mode != "explore" or busy or destination not in connected_regions(zone*3+area): return
+	if player.distance_to(region_exit_tile(destination)) != 1: return
+	var next_zone: int = destination/3
+	var next_area: int = destination%3
+	if not can_navigate_region(next_zone,next_area):
+		message = "前方通往%s。请先完成%s资格挑战。" % [AREAS[next_zone][next_area],ISLANDS[maxi(0,next_zone-1)].name]
+		refresh()
+		return
+	var origin := zone*3+area
+	# Compute the reciprocal gate in the destination without mutating game state.
+	var former_zone := zone
+	var former_area := area
+	zone = next_zone
+	area = next_area
+	var gate := region_exit_tile(origin)
+	zone = former_zone
+	area = former_area
+	var arrival := gate+Vector2i.RIGHT if gate.x == 0 else gate+Vector2i.LEFT if gate.x == 17 else gate+Vector2i.DOWN if gate.y == 0 else gate+Vector2i.UP
+	steps_walked += 1
+	visit_region(next_zone,next_area,arrival)
+	step_timer = 0.22
+	message = "沿道路进入%s。身后的出口可以原路返回。" % AREAS[zone][area]
+	refresh()
+
+func next_region_toward(destination: int) -> int:
+	var origin := zone*3+area
+	var queue := [origin]
+	var previous := {origin:origin}
+	while not queue.is_empty():
+		var node: int = queue.pop_front()
+		if node == destination:
+			while previous[node] != origin and node != origin: node = previous[node]
+			return node if node != origin else -1
+		for neighbor in connected_regions(node):
+			if not previous.has(neighbor) and region_unlocked(int(neighbor/3)):
+				previous[neighbor] = node
+				queue.append(neighbor)
+	return -1
+
+func draw_region_exits() -> void:
+	var font: Font = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
+	for destination in connected_regions(zone*3+area):
+		var tile := region_exit_tile(destination)
+		var pos := ORIGIN+Vector2(tile)*TILE
+		var unlocked := region_unlocked(int(destination/3))
+		var color := Color("e9ce8c") if unlocked else Color("c17c75")
+		draw_rect(Rect2(pos+Vector2(3,3),Vector2(34,34)),Color("394e50"))
+		draw_rect(Rect2(pos+Vector2(3,3),Vector2(34,34)),color,false,2)
+		var direction := Vector2.LEFT if tile.x == 0 else Vector2.RIGHT if tile.x == 17 else Vector2.UP if tile.y == 0 else Vector2.DOWN
+		var center := pos+Vector2(20,20)
+		draw_line(center-direction*10,center+direction*10,color,3)
+		draw_line(center+direction*10,center+direction*3+Vector2(-direction.y,direction.x)*6,color,3)
+		draw_line(center+direction*10,center+direction*3-Vector2(-direction.y,direction.x)*6,color,3)
+		var name := str(AREAS[int(destination/3)][destination%3])+("" if unlocked else " · 锁定")
+		var label := pos+Vector2(4,51) if tile.x == 0 else pos+Vector2(-140,24) if tile.x == 17 else pos+Vector2(43,24)
+		draw_rect(Rect2(label+Vector2(-4,-18),Vector2(mini(138,name.length()*12+8),25)),Color(0.08,0.15,0.19,0.88))
+		draw_string(font,label,name,HORIZONTAL_ALIGNMENT_LEFT,134,12,color)
+	draw_string(font,Vector2(43,605),str(Layout.FEATURES[zone*3+area])+"   /   金色箭头：步行出口   ·   M：地图",HORIZONTAL_ALIGNMENT_LEFT,718,13,Color("b6c9bf"))
+
+func show_companion_skills(storage: bool, index: int) -> void:
+	if mode != "explore": return
+	var pets: Array = reserve if storage else party
+	if index < 0 or index >= pets.size(): return
+	var species: Dictionary = SPECIES[int(pets[index].species)]
+	open_modal(str(species.name)+" · 技能档案",Moves.catalogue(species)+"\n\n"+str(species.lore))
+	modal_button("返回等级与成长",show_backpack_pet.bind(storage,index))
