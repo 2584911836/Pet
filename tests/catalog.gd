@@ -33,7 +33,7 @@ func run() -> void:
 		var species: Dictionary = Data.SPECIES[id]
 		check(not names.has(species.name),"unique name "+str(id))
 		names[species.name] = true
-		check(int(species.type) >= 0 and int(species.type) < 3,"valid element "+str(id))
+		check(int(species.type) >= 0 and int(species.type) < 12,"valid element "+str(id))
 		check(not str(species.skill).is_empty() and not str(species.lore).is_empty(),"skill and ecology "+str(id))
 		check(game.valid_creature(game.creature(id)),"valid runtime creature "+str(id))
 		var portrait: Texture2D = Art.portrait(id)

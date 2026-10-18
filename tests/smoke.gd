@@ -29,7 +29,7 @@ func run() -> void:
 	check(game.effectiveness(0,2) == 1.5, "forest beats tide")
 	check(game.effectiveness(1,0) == 1.5, "ember beats forest")
 	check(game.effectiveness(2,1) == 1.5, "tide beats ember")
-	check(game.effectiveness(0,1) == 0.7, "resistance works")
+	check(game.effectiveness(0,1) == 1.0, "unlisted matchups are neutral without implicit resistance")
 	game.move_player(Vector2i(-1,0))
 	game.move_player(Vector2i(-1,0))
 	check(game.player.x == 1, "water boundary blocks movement")

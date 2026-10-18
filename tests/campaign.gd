@@ -32,7 +32,7 @@ func run() -> void:
 			for i in range(game.party.size()):
 				var p: Dictionary = game.party[i]
 				var s: Dictionary = game.SPECIES[int(p.species)]
-				var score: float = game.effectiveness(int(s.type),int(game.SPECIES[target].type))*(int(s.power)+int(p.level)*2)*int(p.max_hp)
+				var score: float = game.Elements.multiplier(int(game.Moves.list(s)[2].element),game.SPECIES[target].elements)*(int(s.power)+int(p.level)*2)*int(p.max_hp)
 				if score > best:
 					best = score
 					game.active = i

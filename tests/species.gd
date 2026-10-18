@@ -52,7 +52,7 @@ func run() -> void:
 		match str(s.skill_kind):
 			"burn": check(int(target.dot_turns) == 1 and int(target.dot) == int(s.skill_value),"burn ticks and duration")
 			"poison": check(int(target.dot_turns) == 2 and int(target.dot) == maxi(1,int(s.skill_value)-2),"poison ticks and duration")
-			"shield": check(int(own.shield) >= 0 and int(game.party[0].hp) >= 500-12,"shield absorbs retaliation")
+			"shield": check(int(own.shield) >= 0 and int(game.party[0].hp) >= 500-maxi(0,(int(game.SPECIES[0].power)+int(game.enemy.level))*2-int(s.skill_value)*2),"shield absorbs retaliation")
 			"regen": check(int(own.regen_turns) == 1,"regen advances once per action")
 			"break": check(int(target.broken) == 2,"break retained for followup attacks")
 			"echo": check(int(own.echo) == int(s.skill_value)*2,"echo retained for followup attack")

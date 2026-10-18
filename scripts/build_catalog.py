@@ -8,9 +8,15 @@ ROOT=Path(__file__).resolve().parents[1]
 source=ROOT/'assets/pets/species_designs.json'
 records=json.loads(source.read_text())
 assert len(records)==108 and [r['id'] for r in records]==list(range(108))
+for record in records:
+    elements=record['elements']
+    assert 1 <= len(elements) <= 2 and len(set(elements))==len(elements)
+    assert all(isinstance(e,int) and 0 <= e < 12 for e in elements)
+    assert record['type']==elements[0] and record['skill_element'] in elements
+    assert 0 <= record['coverage'] < 12
 for field in ['name','skill','lore','visual']:
     assert len({r[field] for r in records})==108, field
-fields=['name','type','color','max_hp','power','skill','lore','family','form','trait','island','area','tide','skill_kind','skill_value','skill_scale','role']
+fields=['name','type','color','max_hp','power','skill','lore','family','form','trait','island','area','tide','skill_kind','skill_value','skill_scale','role','elements','coverage','skill_element']
 path=ROOT/'scripts/game_data.gd'
 old=path.read_text()
 islands=old[old.index('const ISLANDS = '):]
