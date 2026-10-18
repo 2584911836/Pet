@@ -244,12 +244,10 @@ func refresh() -> void:
 		add_button("世界地图 / 9 个区域", show_world_map)
 		add_button("灵兽图鉴 / 108 种灵兽", open_dex)
 		add_button("旅程菜单 [Esc]", show_pause)
-		if guardian_defeated and zone < 2:
-			add_button("出发 → " + str(ISLANDS[zone+1].name), travel.bind(zone+1))
-		for island in range(zone):
-			add_button("返回 " + str(ISLANDS[island].name), travel.bind(island))
-		if zone < 2 and completed[zone] and completed[zone+1]:
-			add_button("前往 " + str(ISLANDS[zone+1].name), travel.bind(zone+1))
+		for destination in connected_regions(zone*3+area):
+			var z: int = destination / 3
+			var a: int = destination % 3
+			if region_unlocked(z): add_button("沿路前往 · "+str(AREAS[z][a]),navigate_region.bind(z,a))
 	for i in range(party.size()):
 		if i != active and mode == "explore":
 			add_button("换上 %s\n生命 %d/%d" % [SPECIES[int(party[i].species)].name, party[i].hp, party[i].max_hp], switch_to.bind(i))
@@ -1101,23 +1099,7 @@ func show_credits() -> void:
 	modal_button("返回",show_title)
 
 func travel(destination: int) -> void:
-	if mode != "explore" or destination < 0 or destination > 2: return
-	if destination > 0 and not completed[destination-1]: return
-	crystals[zone] = fragments
-	zone = destination
-	area = 0
-	fragments = int(crystals[zone])
-	guardian_defeated = bool(completed[zone])
-	player = Vector2i(2,6)
-	visual_player = Vector2(player)
-	companion_target = Vector2(player)+Vector2(0,1)
-	companion_visual = companion_target
-	heal_party()
-	message = "抵达" + str(ISLANDS[zone].name) + "，营地已准备好。"
-	audio.play_track("island_"+str(zone))
-	save_game(false)
-	refresh()
-	show_story(str(Story.CHAPTERS[zone].intro))
+	navigate_region(destination,0)
 
 func quit_game() -> void:
 	if quitting: return
@@ -1255,32 +1237,52 @@ func change_reserve_page(direction: int) -> void:
 	reserve_page += direction
 	show_roster()
 
+# A single graph drives the chart, road actions and route validation.
+const REGION_EDGES = [[0,1],[1,2],[0,2],[2,3],[3,4],[4,5],[3,5],[5,6],[6,7],[7,8],[6,8]]
+
+func connected_regions(node: int) -> Array[int]:
+	var result: Array[int] = []
+	for edge in REGION_EDGES:
+		if edge[0] == node: result.append(edge[1])
+		elif edge[1] == node: result.append(edge[0])
+	return result
+
+func region_unlocked(destination: int) -> bool:
+	if destination < 0 or destination > 2: return false
+	for previous in range(destination):
+		if not completed[previous]: return false
+	return true
+
+func fast_travel_unlocked() -> bool:
+	return completed.count(true) == 3
+
+func can_navigate_region(destination: int, location: int) -> bool:
+	if mode != "explore" or busy or location < 0 or location > 2 or not region_unlocked(destination): return false
+	var target := destination*3+location
+	return target != zone*3+area and (fast_travel_unlocked() or target in connected_regions(zone*3+area))
+
+func navigate_region(destination: int, location: int) -> void:
+	if not can_navigate_region(destination,location): return
+	var teleport := fast_travel_unlocked()
+	visit_region(destination,location)
+	message = ("传送抵达" if teleport else "沿道路抵达")+str(AREAS[zone][area])+"。"
+	refresh()
+
 func show_world_map() -> void:
 	if mode != "explore":
 		message = "请先结束战斗再打开区域地图。"
 		return
-	open_modal("训练师世界地图", "三个地区 · 九个生态区域 · 108 种灵兽\n当前：%s / %s\n每片区域有十二种伙伴，所有物种均可全天遇见。" % [ISLANDS[zone].name,AREAS[zone][area]])
-	var chart := preload("res://scripts/ui_art.gd").new()
-	chart.custom_minimum_size = Vector2(660,165)
-	chart.completed = completed
-	chart.current = zone
+	open_modal("训练师节点地图", "当前：%s / %s\n%s\n实线：已开放道路 · 虚线：资格锁定道路 · 金框：当前位置" % [ISLANDS[zone].name,AREAS[zone][area],"三个资格挑战已完成：全图传送已解锁，点击任意其他节点即可抵达。" if fast_travel_unlocked() else "沿相邻节点探索；完成地区资格挑战开放下一地区。全图传送：%d / 3" % completed.count(true)])
+	var chart := preload("res://scripts/region_chart.gd").new()
+	chart.game = self
+	chart.custom_minimum_size = Vector2(660,300)
 	modal_body.add_child(chart)
-	for island in range(3):
-		var unlocked := island == 0 or bool(completed[island-1])
-		for region in range(3):
-			var label := "%s · %s" % [ISLANDS[island].name,AREAS[island][region]]
-			var recorded := 0
-			for id in known:
-				if int(SPECIES[id].island) == island and int(SPECIES[id].area) == region: recorded += 1
-			label += " / %d / 12" % recorded
-			label += " / 尚未解锁" if not unlocked else " / 当前区域" if zone == island and area == region else " / 前往营地"
-			modal_button(label,visit_region.bind(island,region))
-			modal_body.get_child(modal_body.get_child_count()-1).disabled = not unlocked
+	chart.build_nodes()
 	modal_button("返回旅程",close_modal)
 
 func visit_region(island: int, region: int) -> void:
 	if mode != "explore" or island < 0 or island > 2 or region < 0 or region > 2: return
-	if island > 0 and not completed[island-1]: return
+	if not region_unlocked(island): return
 	crystals[zone] = fragments
 	zone = island
 	area = region
@@ -1290,7 +1292,6 @@ func visit_region(island: int, region: int) -> void:
 	visual_player = Vector2(player)
 	companion_target = Vector2(player)+Vector2(0,1)
 	companion_visual = companion_target
-	heal_party()
 	message = "抵达%s。按 M 查看地形，按 J 查看任务，按 R 与身边的人交谈。" % AREAS[zone][area]
 	close_modal()
 	audio.play_track("island_"+str(zone))
@@ -1654,7 +1655,7 @@ func show_quest_journal() -> void:
 	enlarge_story_modal()
 	modal_button("追踪主线目标",set_tracking.bind("main"))
 	if int(objective.zone) != zone or int(objective.area) != area:
-		modal_button("前往主线区域 · "+str(AREAS[int(objective.zone)][int(objective.area)]),visit_region.bind(int(objective.zone),int(objective.area)))
+		modal_button("查看通往主线区域的道路 · "+str(AREAS[int(objective.zone)][int(objective.area)]),show_world_map)
 	modal_button("追踪营地 / 阿岚",set_tracking.bind("camp"))
 	if area > 0: modal_button("追踪本区 NPC",set_tracking.bind("field"))
 	var tasks := Label.new()
@@ -1740,7 +1741,7 @@ func show_arena_desk() -> void:
 	if mode != "explore" or player.distance_to(Vector2i(15,2)) > 1: return
 	if area != 0 and not (zone == 2 and area == 2 and completed.count(true) == 3):
 		open_modal("区域巡查站", "地区资格赛位于%s。这里负责野外调查，不举行导师考核。" % AREAS[zone][0])
-		modal_button("返回地区赛场",visit_region.bind(zone,0))
+		modal_button("地图 · 返回地区赛场",show_world_map)
 		modal_button("返回探索",close_modal)
 		return
 	var names := ["春蕾 · 青芽导师","唐砾 · 赤岩导师","凌朔 · 星原导师"]

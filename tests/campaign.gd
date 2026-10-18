@@ -22,6 +22,7 @@ func run() -> void:
 			game.player = Vector2i(2,5)
 			game.rest()
 			if game.completed[game.zone]:
+				game.navigate_region(game.zone,2)
 				game.travel(game.zone+1)
 				game.close_modal()
 			# Choose the most effective healthy companion at camp.

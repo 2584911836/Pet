@@ -18,6 +18,8 @@ mkdir -p "$test_home/elements-data"
 XDG_DATA_HOME="$test_home/elements-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 30s godot --headless --path "$project_dir" --script res://tests/elements.gd
 mkdir -p "$test_home/story-data"
 XDG_DATA_HOME="$test_home/story-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 30s godot --headless --path "$project_dir" --script res://tests/story.gd
+mkdir -p "$test_home/navigation-data"
+XDG_DATA_HOME="$test_home/navigation-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 30s godot --headless --path "$project_dir" --script res://tests/navigation.gd
 if [[ "${1:-}" == "--full" ]]; then
   mkdir -p "$test_home/campaign-data" "$test_home/collection-data"
   XDG_DATA_HOME="$test_home/campaign-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 180s godot --headless --path "$project_dir" --script res://tests/campaign.gd

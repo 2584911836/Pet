@@ -113,6 +113,7 @@ func run() -> void:
 	game.completed = [true,false,false]
 	game.travel(2)
 	check(game.zone == 0, "island progression gate blocks skipping chapters")
+	game.navigate_region(0,2)
 	game.travel(1)
 	check(game.zone == 1 and game.fragments == 0, "travel starts fresh island crystal objective")
 	game.close_modal()
@@ -123,6 +124,7 @@ func run() -> void:
 	game.turn("attack")
 	check(game.completed[1], "second beacon completes chapter")
 	game.close_modal()
+	game.navigate_region(1,2)
 	game.travel(2)
 	game.close_modal()
 	game.start_battle(8,true)
