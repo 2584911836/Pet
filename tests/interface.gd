@@ -95,6 +95,20 @@ func run() -> void:
 	for child in game.modal_body.get_children():
 		if child is GridContainer and child.get_child_count() == 9: has_grid = true
 	check(has_grid,"dex displays nine paginated creature cards")
+	# Real atlas textures are larger than cards: every page must constrain them.
+	for page in range(12):
+		game.dex_page = page
+		game.show_dex()
+		await process_frame
+		await process_frame
+		for child in game.modal_body.get_children():
+			if child is GridContainer:
+				for card in child.get_children():
+					var portrait: TextureRect = card.get_node("Content/Portrait")
+					var bounds := Rect2(Vector2.ZERO,card.size)
+					var image_bounds := Rect2(portrait.global_position-card.global_position,portrait.size)
+					check(bounds.encloses(image_bounds) and portrait.size.y > 50 and portrait.stretch_mode == TextureRect.STRETCH_KEEP_ASPECT_CENTERED,"dex portrait fits card on page %d" % (page+1))
+
 	game.close_modal()
 	game.completed = [true,true,true]
 	game.visit_region(2,2)

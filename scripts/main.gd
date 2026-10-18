@@ -694,7 +694,7 @@ func modal_button(text: String, callback: Callable) -> void:
 	if not get_viewport().gui_get_focus_owner() or not modal.is_ancestor_of(get_viewport().gui_get_focus_owner()): b.grab_focus()
 
 func show_title() -> void:
-	open_modal("潮 汐 灵 约", "T I D E B O U N D   /   v0.5.1\n\n海水会记住每一次约定。\n三座岛屿 · 九片生态区 · 108 种灵兽\nWASD 移动 · T 潮铃 · Esc 菜单")
+	open_modal("潮 汐 灵 约", "T I D E B O U N D   /   v0.5.2\n\n海水会记住每一次约定。\n三座岛屿 · 九片生态区 · 108 种灵兽\nWASD 移动 · T 潮铃 · Esc 菜单")
 	audio.play_track("title")
 	var shade: ColorRect = modal.get_child(0)
 	shade.color = Color(0.02,0.05,0.1,0.16)
@@ -794,7 +794,10 @@ func show_dex() -> void:
 		if dex_filter == 2 and known.has(id): continue
 		ids.append(id)
 	dex_page = clampi(dex_page,0,maxi(0,int((ids.size()-1)/9)))
-	open_modal("群岛图鉴", "已结识 %d / 108 · 第 %d / %d 页\n选择灵兽卡片，查看生态、技能与栖息地。" % [discovered(),dex_page+1,maxi(1,int(ceil(ids.size()/9.0)))])
+	open_modal("群岛图鉴", "已结识 %d / 108 · 第 %d / %d 页 · 点击查看详情" % [discovered(),dex_page+1,maxi(1,int(ceil(ids.size()/9.0)))])
+	var panel: PanelContainer = modal.get_child(1)
+	panel.position.y = 20
+	panel.size.y = 680
 	var nav := HBoxContainer.new()
 	nav.add_theme_constant_override("separation",10)
 	for spec in [["上一页",-1],["下一页",1]]:
@@ -818,26 +821,34 @@ func show_dex() -> void:
 		var id: int = ids[index]
 		var owned := known.has(id)
 		var card := Button.new()
-		card.custom_minimum_size = Vector2(208,122)
+		card.custom_minimum_size = Vector2(208,104)
 		card.pressed.connect(show_pet_detail.bind(id))
 		var image := TextureRect.new()
-		image.texture = preload("res://scripts/pixel_art.gd").portrait(id)
-		image.position = Vector2(54,5)
-		image.size = Vector2(100,80)
+		image.name = "Portrait"
 		image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		image.texture = preload("res://scripts/pixel_art.gd").portrait(id)
 		image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		image.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		image.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		if not owned: image.modulate = Color(0.25,0.34,0.39,1)
-		card.add_child(image)
+		var content := VBoxContainer.new()
+		content.name = "Content"
+		content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card.add_child(content)
+		content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		content.offset_left = 5
+		content.offset_right = -5
+		content.offset_top = 5
+		content.offset_bottom = -5
+		image.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		content.add_child(image)
 		var name_label := Label.new()
 		name_label.text = "%03d  %s  [%s]" % [id+1,SPECIES[id].name,TYPES[int(SPECIES[id].type)]]
-		name_label.position = Vector2(5,89)
-		name_label.size = Vector2(198,28)
+		name_label.custom_minimum_size.y = 28
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		name_label.add_theme_font_size_override("font_size",15)
 		name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		card.add_child(name_label)
+		content.add_child(name_label)
 		grid.add_child(card)
 	modal_body.add_child(grid)
 	if grid.get_child_count() > 0: grid.get_child(0).grab_focus()
