@@ -158,6 +158,70 @@ func run() -> void:
 	game.player = Vector2i(4,4)
 	game.move_player(Vector2i(-1,0))
 	check(game.modal != null and game.player == Vector2i(4,4),"bumping keeper from east starts conversation")
+	game.close_modal()
+	game.mode = "explore"
+	game.area = 0
+	game.player = Vector2i(2,6)
+	game.party = [game.creature(0),game.creature(1),game.creature(2)]
+	game.reserve = [game.creature(3)]
+	game.active = 2
+	game.show_backpack()
+	await process_frame
+	check(game.modal_body.get_node("BackpackGrid").get_child_count() == 3,"backpack displays individual party pets")
+	game.backpack_transfer(false,0)
+	check(game.party.size() == 2 and game.reserve.size() == 2 and game.active == 1 and game.party[game.active].species == 2,"deposit preserves active companion after index shift")
+	game.backpack_transfer(true,0)
+	check(game.party.size() == 3 and game.party[2].species == 3,"withdraw fills available party slot")
+	game.backpack_select(2)
+	check(game.active == 2,"backpack selects active companion")
+	game.load_game()
+	check(game.active == 2 and game.party[2].species == 3 and game.reserve.size() == 1,"backpack changes survive save and load")
+	game.area = 1
+	game.backpack_transfer(false,0)
+	check(game.party.size() == 3,"storage transfer rejected outside camp region")
+	game.area = 0
+	game.party = [game.creature(0)]
+	game.active = 0
+	game.backpack_transfer(false,0)
+	check(game.party.size() == 1,"cannot deposit final companion")
+	game.party.append(game.creature(1))
+	game.party[1].hp = 0
+	game.backpack_transfer(false,0)
+	check(game.party.size() == 2,"cannot deposit last conscious companion")
+	game.backpack_select(1)
+	check(game.active == 0,"cannot select fainted companion")
+	game.party = []
+	for id in range(6): game.party.append(game.creature(id))
+	game.active = 2
+	game.reserve = [game.creature(42)]
+	game.backpack_transfer(true,0)
+	check(game.party.size() == 6 and game.party[2].species == 42 and game.reserve[0].species == 2,"full party exchange conserves both pets")
+	game.reserve = []
+	for id in range(13): game.reserve.append(game.creature(id))
+	game.show_backpack(true,2)
+	await process_frame
+	check(game.modal_body.get_node("BackpackGrid").get_child_count() == 1,"reserve backpack paginates partial final page")
+	game.reserve = []
+	game.show_backpack(true,20)
+	check(game.modal_body.get_node("BackpackGrid").get_child_count() == 0,"empty reserve handles stale page without errors")
+	game.party = [game.creature(0),game.creature(1)]
+	game.active = 0
+	game.reserve = []
+	for id in range(200): game.reserve.append(game.creature(id % game.PET_COUNT))
+	game.backpack_transfer(false,1)
+	check(game.party.size() == 2 and game.reserve.size() == 200,"full reserve rejects deposit without losing pet")
+	game.party = []
+	for id in range(6):
+		game.party.append(game.creature(id))
+		if id > 0: game.party[id].hp = 0
+	game.reserve = [game.creature(42)]
+	game.reserve[0].hp = 0
+	game.backpack_transfer(true,0)
+	check(game.party[0].species == 0 and game.reserve[0].species == 42,"cannot exchange last conscious pet for fainted reserve")
+	game.mode = "battle"
+	game.backpack_transfer(false,0)
+	game.backpack_select(1)
+	check(game.party.size() == 6 and game.active == 0,"backpack actions cannot bypass battle turn rules")
 	game.audio.shutdown()
 	await create_timer(0.2).timeout
 	game.queue_free()

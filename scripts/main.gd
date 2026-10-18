@@ -151,7 +151,7 @@ func refresh() -> void:
 		add_button("撤离战斗", turn.bind("flee"))
 	else:
 		add_button("在营地休息 [E]", rest)
-		add_button("营地编队 / 储备灵兽", show_roster)
+		add_button("宠物背包 / 队伍与后备", show_backpack)
 		add_button("与守灯人交谈 [R]", talk_keeper)
 		add_button("摇响潮铃 [T] / 改变潮相", change_tide)
 		add_button("守灯人档案", show_character)
@@ -694,7 +694,7 @@ func modal_button(text: String, callback: Callable) -> void:
 	if not get_viewport().gui_get_focus_owner() or not modal.is_ancestor_of(get_viewport().gui_get_focus_owner()): b.grab_focus()
 
 func show_title() -> void:
-	open_modal("潮 汐 灵 约", "T I D E B O U N D   /   v0.5.2\n\n海水会记住每一次约定。\n三座岛屿 · 九片生态区 · 108 种灵兽\nWASD 移动 · T 潮铃 · Esc 菜单")
+	open_modal("潮 汐 灵 约", "T I D E B O U N D   /   v0.6.0\n\n海水会记住每一次约定。\n三座岛屿 · 九片生态区 · 108 种灵兽\nWASD 移动 · T 潮铃 · Esc 菜单")
 	audio.play_track("title")
 	var shade: ColorRect = modal.get_child(0)
 	shade.color = Color(0.02,0.05,0.1,0.16)
@@ -782,6 +782,7 @@ func show_pause() -> void:
 	if mode == "explore": modal_button("保存旅程",func(): save_game(); close_modal())
 	modal_button("守灯人档案",show_character)
 	modal_button("图鉴",open_dex)
+	modal_button("宠物背包",show_backpack)
 	modal_button("群岛地图",show_world_map)
 	modal_button("设置与操作说明",show_settings)
 	modal_button("返回标题",show_title)
@@ -1213,3 +1214,146 @@ func keeper_hint() -> void:
 func capture_chance() -> float:
 	if guardian_battle or enemy.is_empty(): return 0
 	return minf(0.95,0.2+0.7*(1.0-float(enemy.hp)/float(enemy.max_hp))+relics.count(true)*0.005+keeper_rewards.count(true)*0.02)
+
+# Backpack shares existing creature dictionaries and the version-2 save format.
+func backpack_at_camp() -> bool:
+	return mode == "explore" and area == 0 and player.distance_to(Vector2i(2,5)) <= 1
+
+func show_backpack(storage: bool = false, page: int = 0) -> void:
+	if mode != "explore": return
+	var pets: Array = reserve if storage else party
+	page = clampi(page,0,maxi(0,int((pets.size()-1)/6)))
+	open_modal("宠物背包", "随行 %d / 6 · 后备 %d / 200 · 契约符 %d\n随时查看与选择出战；营地可存取，须保留一名可战斗同伴。" % [party.size(),reserve.size(),seals])
+	var panel: PanelContainer = modal.get_child(1)
+	panel.position.y = 20
+	panel.size.y = 680
+	var tabs := HBoxContainer.new()
+	for tab in [false,true]:
+		var button := Button.new()
+		button.text = ("随行队伍" if not tab else "后备宠物") + (" · 当前" if tab == storage else "")
+		button.custom_minimum_size = Vector2(300,36)
+		button.pressed.connect(show_backpack.bind(tab,0))
+		tabs.add_child(button)
+	modal_body.add_child(tabs)
+	var grid := GridContainer.new()
+	grid.name = "BackpackGrid"
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation",12)
+	grid.add_theme_constant_override("v_separation",10)
+	for i in range(page*6,mini(pets.size(),page*6+6)):
+		var p: Dictionary = pets[i]
+		var species: Dictionary = SPECIES[int(p.species)]
+		var card := Button.new()
+		card.custom_minimum_size = Vector2(208,154)
+		card.pressed.connect(show_backpack_pet.bind(storage,i))
+		var content := VBoxContainer.new()
+		content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card.add_child(content)
+		content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		content.offset_left = 8
+		content.offset_right = -8
+		content.offset_top = 6
+		content.offset_bottom = -6
+		var portrait := TextureRect.new()
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		portrait.texture = preload("res://scripts/pixel_art.gd").portrait(int(p.species))
+		portrait.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		content.add_child(portrait)
+		var label := Label.new()
+		label.text = "%s  Lv.%d%s\n生命 %d / %d" % [species.name,p.level," · 出战" if not storage and i == active else "",p.hp,p.max_hp]
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size",15)
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		content.add_child(label)
+		var hp := ProgressBar.new()
+		hp.max_value = p.max_hp
+		hp.value = p.hp
+		hp.show_percentage = false
+		hp.custom_minimum_size.y = 8
+		hp.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		content.add_child(hp)
+		grid.add_child(card)
+	modal_body.add_child(grid)
+	if pets.is_empty():
+		var empty := Label.new()
+		empty.text = "后备箱暂无宠物。队伍满员后，新同伴会进入这里。"
+		modal_body.add_child(empty)
+	var nav := HBoxContainer.new()
+	for direction in [-1,1]:
+		var button := Button.new()
+		button.text = "上一页" if direction < 0 else "下一页"
+		button.custom_minimum_size = Vector2(160,34)
+		button.disabled = page == 0 if direction < 0 else (page+1)*6 >= pets.size()
+		button.pressed.connect(show_backpack.bind(storage,page+direction))
+		nav.add_child(button)
+	var count := Label.new()
+	count.text = "第 %d / %d 页" % [page+1,maxi(1,int(ceil(pets.size()/6.0)))]
+	nav.add_child(count)
+	modal_body.add_child(nav)
+	modal_button("返回旅程",close_modal)
+	if grid.get_child_count() > 0: grid.get_child(0).grab_focus()
+
+func show_backpack_pet(storage: bool, index: int) -> void:
+	if mode != "explore": return
+	var pets: Array = reserve if storage else party
+	if index < 0 or index >= pets.size(): return
+	var p: Dictionary = pets[index]
+	var species: Dictionary = SPECIES[int(p.species)]
+	open_modal(str(species.name), "Lv.%d · [%s] · 生命 %d / %d · 经验 %d / 3\n技能：%s\n%s" % [p.level,TYPES[int(species.type)],p.hp,p.max_hp,p.xp,species.skill,species.lore])
+	var image := TextureRect.new()
+	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	image.texture = preload("res://scripts/pixel_art.gd").portrait(int(p.species))
+	image.custom_minimum_size.y = 130
+	modal_body.add_child(image)
+	if not storage:
+		modal_button("当前出战" if index == active else "设为出战伙伴",backpack_select.bind(index))
+		modal_body.get_child(modal_body.get_child_count()-1).disabled = index == active or int(p.hp) <= 0
+	if backpack_at_camp():
+		modal_button(("取出到队伍" if party.size() < 6 else "与出战伙伴交换") if storage else "存入后备箱",backpack_transfer.bind(storage,index))
+		var blocked := false
+		if storage:
+			blocked = party.size() == 6 and int(p.hp) <= 0 and int(party[active].hp) > 0 and party.filter(func(pet): return int(pet.hp) > 0).size() <= 1
+		else:
+			blocked = party.size() <= 1 or reserve.size() >= 200 or (int(p.hp) > 0 and party.filter(func(pet): return int(pet.hp) > 0).size() <= 1)
+		modal_body.get_child(modal_body.get_child_count()-1).disabled = blocked
+	else:
+		var hint := Label.new()
+		hint.text = "返回营地可调整队伍与后备；存入时须保留一名可战斗同伴。"
+		hint.add_theme_font_size_override("font_size",16)
+		modal_body.add_child(hint)
+	modal_button("返回宠物背包",show_backpack.bind(storage,int(index/6)))
+
+func backpack_select(index: int) -> void:
+	if mode != "explore" or index < 0 or index >= party.size() or int(party[index].hp) <= 0: return
+	switch_to(index)
+	save_game(false)
+	show_backpack()
+
+func backpack_transfer(storage: bool, index: int) -> void:
+	if not backpack_at_camp(): return
+	if storage:
+		if index < 0 or index >= reserve.size(): return
+		if party.size() < 6: party.append(reserve.pop_at(index))
+		else:
+			# Never exchange away the last conscious companion for a fainted one.
+			if int(reserve[index].hp) <= 0 and party.filter(func(p): return int(p.hp) > 0).size() <= 1 and int(party[active].hp) > 0: return
+			var old: Dictionary = party[active]
+			party[active] = reserve[index]
+			reserve[index] = old
+	else:
+		if index < 0 or index >= party.size() or party.size() <= 1 or reserve.size() >= 200: return
+		if int(party[index].hp) > 0 and party.filter(func(p): return int(p.hp) > 0).size() <= 1: return
+		reserve.append(party.pop_at(index))
+		if index < active: active -= 1
+		elif index == active: active = 0
+	if int(party[active].hp) <= 0:
+		for i in range(party.size()):
+			if int(party[i].hp) > 0:
+				active = i
+				break
+	save_game(false)
+	refresh()
+	show_backpack(storage)
