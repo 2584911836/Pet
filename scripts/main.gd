@@ -42,6 +42,10 @@ var completed: Array = [false, false, false]
 var crystals: Array = [0, 0, 0]
 var tide := 0
 var focus := 3
+const Signature = preload("res://scripts/signature_skills.gd")
+var battle_status: Label
+var combat_states: Dictionary = {}
+var enemy_status: Dictionary = {}
 var enemy_round := 0
 var battle_id := 0
 var relics: Array = [false,false,false,false,false,false]
@@ -92,10 +96,17 @@ func build_ui() -> void:
 	title.add_theme_font_size_override("font_size", 29)
 	add_child(title)
 	var subtitle := Label.new()
-	subtitle.text = "微光群岛     •     原创怪物收集冒险     /     SHORT ADVENTURE 0.5"
+	subtitle.text = "微光群岛     •     原创怪物收集冒险     /     SHORT ADVENTURE 0.7"
 	subtitle.position = Vector2(42, 70)
 	subtitle.modulate = Color("9aafbb")
 	add_child(subtitle)
+	battle_status = Label.new()
+	battle_status.position = Vector2(45,100)
+	battle_status.size = Vector2(710,64)
+	battle_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	battle_status.add_theme_font_size_override("font_size",14)
+	battle_status.modulate = Color("b8dbd3")
+	add_child(battle_status)
 	info = Label.new()
 	info.position = Vector2(800, 145)
 	info.size = Vector2(325, 210)
@@ -140,9 +151,12 @@ func refresh() -> void:
 	journal = "任务：收集 3 枚潮晶 → 东北灯塔。低潮可通过浅滩。" if not guardian_defeated else "灯塔已点亮。可在右侧选择下一座岛，或继续收集。"
 	if completed.count(true) == 3: journal = "三座灯塔已点亮。旅程完成，继续寻找108 种灵兽。"
 	log_label.text = message + "\n" + journal
+	battle_status.visible = mode == "battle"
 	if mode == "battle":
 		add_button("攻击 / 稳定输出", turn.bind("attack"))
 		add_button("%s / 潮息 %d / 3" % [s.skill, focus], turn.bind("skill"))
+		buttons.get_child(buttons.get_child_count()-1).tooltip_text = Signature.description(s)
+		battle_status.text = "定位："+str(s.role)+(" · 守卫每三回合重击" if guardian_battle else " · 对方每三回合使用专属技能")+"\n同伴："+Signature.status_text(current_status())+"\n对方："+Signature.status_text(enemy_status)
 		add_button("防御 / 潮息 +1", turn.bind("guard"))
 		add_button("药草 / 回复 24 生命（%d）" % salves, turn.bind("heal"))
 		if not guardian_battle:
@@ -237,11 +251,17 @@ func start_battle(id: int, guardian: bool = false) -> void:
 	enemy = creature(id, int(ISLANDS[zone].level) if guardian else rng.randi_range(1+zone*2+area, 2+zone*2+area))
 	focus = 3
 	enemy_round = 0
+	combat_states.clear()
+	enemy_status = Signature.state()
 	salves = 3
 	audio.play_track("guardian" if guardian else "battle")
 	audio.sfx("hit")
 	message = ("遗迹守卫出现！" if guardian else "草丛中出现了 " + str(SPECIES[id].name) + "！")
 	refresh()
+
+func current_status() -> Dictionary:
+	if not combat_states.has(active): combat_states[active] = Signature.state()
+	return combat_states[active]
 
 func effectiveness(attacker: int, defender: int) -> float:
 	if (attacker + 2) % 3 == defender: return 1.5
@@ -322,19 +342,24 @@ func turn(action: String) -> void:
 			focus = focus-2 if action == "skill" else mini(3, focus+(2 if int(s.trait) == 7 else 1))
 			var mult := effectiveness(int(s.type), int(e.type)) if action == "skill" else 1.0
 			if action == "skill":
-				mult *= 1.2
+				mult *= 1.2*float(s.skill_scale)
 				if int(s.type) == (2 if tide == 1 else 1): mult *= 1.2
 			if int(s.trait) == 1 and int(p.hp)*2 < int(p.max_hp): mult *= 1.25
 			if int(s.trait) == 6 and action == "skill" and int(enemy.hp)*2 > int(enemy.max_hp): mult *= 1.2
 			var damage := maxi(1, int((int(s.power) + int(p.level)*2) * mult) + rng.randi_range(-2, 2))
 			if action == "skill" and int(s.trait) in [0,3]: p.hp = mini(int(p.max_hp),int(p.hp)+(4 if int(s.trait) == 0 else 8))
 			if action == "skill" and int(s.trait) == 8: guarding = true
+			if action == "skill": damage += Signature.bonus(s,enemy,tide)
+			damage = Signature.direct_damage(damage,current_status(),enemy_status)
+			if action == "skill":
+				Signature.apply(s,p,current_status(),enemy_status,tide)
+				if s.skill_kind == "focus": focus = mini(3,focus+1)
 			audio.sfx("hit")
 			enemy.hp = maxi(0, int(enemy.hp) - damage)
 			impact_left = 0.42
 			impact_enemy = true
 			floating_text = "−"+str(damage)
-			message = "%s造成 %d 点伤害。%s" % ["共鸣技" if action == "skill" else "攻击", damage, "属性优势！" if mult > 1 else ""]
+			message = "%s造成 %d 点伤害。%s" % ["共鸣技" if action == "skill" else "攻击", damage, ("%s · %s" % [s.skill,s.role]) if action == "skill" else ""]
 			if int(enemy.hp) <= 0:
 				finish_battle("战斗胜利！")
 				return
@@ -350,12 +375,27 @@ func turn(action: String) -> void:
 func enemy_turn() -> void:
 	var p: Dictionary = party[active]
 	enemy_round += 1
-	var damage := int(SPECIES[int(enemy.species)].power) + int(enemy.level)
+	var enemy_tick: Dictionary = Signature.tick(enemy,enemy_status)
+	if int(enemy_tick.damage) > 0: message += " 对方侵蚀 −%d。" % enemy_tick.damage
+	if int(enemy.hp) <= 0:
+		finish_battle("持续效果奏效，战斗胜利！")
+		return
+	var player_tick: Dictionary = Signature.tick(p,current_status())
+	if int(player_tick.damage) > 0: message += " 同伴侵蚀 −%d。" % player_tick.damage
+	if int(player_tick.healing) > 0: message += " 润泽 +%d。" % player_tick.healing
+	var enemy_species: Dictionary = SPECIES[int(enemy.species)]
+	var damage := int(enemy_species.power) + int(enemy.level)
+	if not guardian_battle and enemy_round % 3 == 0:
+		damage = int(damage*float(enemy_species.skill_scale)) + Signature.bonus(enemy_species,p,tide)
+		message += " 对方使用 %s。" % enemy_species.skill
 	if guardian_battle and enemy_round % 3 == 0:
 		damage = int(damage*1.7)
 		message += " 守卫释放蓄力技！"
 	if int(SPECIES[int(p.species)].trait) == 4: damage = maxi(1,damage-2)
 	if guarding: damage = maxi(1, damage / 3)
+	damage = Signature.direct_damage(damage,enemy_status,current_status())
+	if not guardian_battle and enemy_round % 3 == 0:
+		Signature.apply(enemy_species,enemy,enemy_status,current_status(),tide)
 	p.hp = maxi(0, int(p.hp) - damage)
 	impact_left = 0.42
 	impact_enemy = false
@@ -694,7 +734,7 @@ func modal_button(text: String, callback: Callable) -> void:
 	if not get_viewport().gui_get_focus_owner() or not modal.is_ancestor_of(get_viewport().gui_get_focus_owner()): b.grab_focus()
 
 func show_title() -> void:
-	open_modal("潮 汐 灵 约", "T I D E B O U N D   /   v0.6.0\n\n海水会记住每一次约定。\n三座岛屿 · 九片生态区 · 108 种灵兽\nWASD 移动 · T 潮铃 · Esc 菜单")
+	open_modal("潮 汐 灵 约", "T I D E B O U N D   /   v0.7.0\n\n海水会记住每一次约定。\n三座岛屿 · 九片生态区 · 108 种灵兽\nWASD 移动 · T 潮铃 · Esc 菜单")
 	audio.play_track("title")
 	var shade: ColorRect = modal.get_child(0)
 	shade.color = Color(0.02,0.05,0.1,0.16)
@@ -822,7 +862,7 @@ func show_dex() -> void:
 		var id: int = ids[index]
 		var owned := known.has(id)
 		var card := Button.new()
-		card.custom_minimum_size = Vector2(208,104)
+		card.custom_minimum_size = Vector2(208,136)
 		card.pressed.connect(show_pet_detail.bind(id))
 		var image := TextureRect.new()
 		image.name = "Portrait"
@@ -857,8 +897,11 @@ func show_dex() -> void:
 
 func show_pet_detail(id: int) -> void:
 	var species: Dictionary = SPECIES[id]
-	var traits := ["共鸣技恢复 4 生命", "生命低于一半时伤害 +25%", "防御时恢复 4 生命", "共鸣技恢复 8 生命", "受到的伤害减少 2", "药草回复提高至 30", "对生命高于一半的对手，共鸣技 +20%", "普通攻击恢复 2 点潮息", "共鸣技同时抵御下一次攻击"]
+	var traits = Signature.PASSIVES
 	open_modal("%03d · %s" % [id+1,species.name], "[%s] · %s\n栖息地：%s / %s\n出没：%s" % [TYPES[int(species.type)],"已结识" if known.has(id) else "尚未建立契约",ISLANDS[int(species.island)].name,AREAS[int(species.island)][int(species.area)],"两种潮相" if int(species.tide) == -1 else "低潮" if int(species.tide) == 0 else "高潮"])
+	var panel: PanelContainer = modal.get_child(1)
+	panel.position.y = 20
+	panel.size.y = 680
 	var image := TextureRect.new()
 	image.texture = preload("res://scripts/pixel_art.gd").portrait(id)
 	image.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -867,7 +910,7 @@ func show_pet_detail(id: int) -> void:
 	image.custom_minimum_size = Vector2(600,150)
 	modal_body.add_child(image)
 	var info_label := Label.new()
-	info_label.text = "%s\n\n技能：%s\n特性：%s\n基础生命 %d · 基础攻击 %d" % [species.lore,species.skill,traits[int(species.trait)],species.max_hp,species.power]
+	info_label.text = "%s\n\n技能：%s\n特性：%s\n基础生命 %d · 基础攻击 %d" % [species.lore,str(species.skill)+" · "+str(species.role)+"\n"+Signature.description(species),traits[int(species.trait)],species.max_hp,species.power]
 	info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info_label.custom_minimum_size.x = 650
 	modal_body.add_child(info_label)
@@ -1301,7 +1344,10 @@ func show_backpack_pet(storage: bool, index: int) -> void:
 	if index < 0 or index >= pets.size(): return
 	var p: Dictionary = pets[index]
 	var species: Dictionary = SPECIES[int(p.species)]
-	open_modal(str(species.name), "Lv.%d · [%s] · 生命 %d / %d · 经验 %d / 3\n技能：%s\n%s" % [p.level,TYPES[int(species.type)],p.hp,p.max_hp,p.xp,species.skill,species.lore])
+	open_modal(str(species.name), "Lv.%d · [%s] · 生命 %d / %d · 经验 %d / 3\n技能：%s\n%s" % [p.level,TYPES[int(species.type)],p.hp,p.max_hp,p.xp,str(species.skill)+" · "+str(species.role)+"\n"+Signature.description(species),species.lore])
+	var panel: PanelContainer = modal.get_child(1)
+	panel.position.y = 20
+	panel.size.y = 680
 	var image := TextureRect.new()
 	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

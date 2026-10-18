@@ -1,7 +1,7 @@
 [
   {
     "form": 0,
-    "image": "form_00.png",
+    "image": "species_00.png",
     "family_order": [
       0,
       1,
@@ -13,12 +13,26 @@
       7,
       8
     ],
-    "generation_file": "exec-20e52266-cc16-4724-9056-f660f077849c.png",
-    "sha256": "2474024ce74fa9a60858b554bee35222538de18c731c840a236425c06c3465ea"
+    "generation_file": "exec-ef904f88-42db-45e9-b714-69f8568b28f0.png",
+    "sha256": "f455c80aadb8f7edbef8799c034e210ebb69794e74b8fa925ea73c61f5402ce5",
+    "note": "Nine independently designed species; row-major ID order, no shared creature template.",
+    "species_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "method": "AI image generation / editing; original output pixels retained",
+    "source_pixels_modified": false
   },
   {
     "form": 1,
-    "image": "form_01.png",
+    "image": "species_01.png",
     "family_order": [
       0,
       1,
@@ -26,16 +40,30 @@
       3,
       4,
       5,
+      6,
       7,
-      8,
-      6
+      8
     ],
-    "generation_file": "exec-11135ffd-31e0-4273-930d-7430594bf097.png",
-    "sha256": "79773aa9086e4c327f8a22036f52d268537d9586c715552d35345647c771aa70"
+    "generation_file": "exec-dae2978e-b87b-46ac-88b4-f00f3fe987f4.png",
+    "sha256": "7b4fca9ffb7de36e527e7de2b9d76efd77836f6f495480f7c51295094c0b1294",
+    "note": "Nine independently designed species; row-major ID order, no shared creature template.",
+    "species_ids": [
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17
+    ],
+    "method": "AI image generation / editing; original output pixels retained",
+    "source_pixels_modified": false
   },
   {
     "form": 2,
-    "image": "form_02.png",
+    "image": "species_02.png",
     "family_order": [
       0,
       1,
@@ -47,12 +75,26 @@
       7,
       8
     ],
-    "generation_file": "exec-b3579fd4-6a58-4135-8eff-e29d982ea2a3.png",
-    "sha256": "aa291a8eb506d79d16a03f0716efab08b2786a9e66859d0819c2d5089f8a5a17"
+    "generation_file": "exec-0df3fb6d-2fc0-48d7-aa77-3fb5559ba620.png",
+    "sha256": "41b47d863c6c2bab6c4d0341b44e08427d48fe745631889a05089c00c7e12c49",
+    "note": "Nine independently designed species; row-major ID order, no shared creature template.",
+    "species_ids": [
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26
+    ],
+    "method": "AI image generation / editing; original output pixels retained",
+    "source_pixels_modified": false
   },
   {
     "form": 3,
-    "image": "form_03.png",
+    "image": "species_03.png",
     "family_order": [
       0,
       1,
@@ -60,16 +102,30 @@
       3,
       4,
       5,
+      6,
       7,
-      8,
-      6
+      8
     ],
-    "generation_file": "exec-3922c28b-3f4a-41b4-bf36-8c0441575f76.png",
-    "sha256": "a74d153ea62a2a92877c69ccf8f88b571d5cef32854b56611c5740334425de01"
+    "generation_file": "exec-1e18f8f0-a505-4e7e-a569-5a62735be1ee.png",
+    "sha256": "03e4af1d241f0113b2eefcf5b6ee193ba9adef7f15d1db2563625ae28c83db65",
+    "note": "Nine independently designed species; row-major ID order, no shared creature template.",
+    "species_ids": [
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35
+    ],
+    "method": "AI image generation / editing; original output pixels retained",
+    "source_pixels_modified": false
   },
   {
     "form": 4,
-    "image": "form_04.png",
+    "image": "species_04.png",
     "family_order": [
       0,
       1,
@@ -81,12 +137,26 @@
       7,
       8
     ],
-    "generation_file": "exec-b8e97c3b-7535-457a-b40f-ef79093f8ff3.png",
-    "sha256": "49b1dd73d57ec122d3cba6bdb1929474faaa362ef81918171631b46b3f7fdaab"
+    "generation_file": "exec-47b4b20d-77ca-4f61-8ff8-0c1b1d7b82b8.png",
+    "sha256": "5aced9e7c4d8c1b1c6af7679e5b31dba61eae4d36a36c4835617cef247c27d8e",
+    "note": "Nine independently designed species; row-major ID order, no shared creature template.",
+    "species_ids": [
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44
+    ],
+    "method": "AI image generation / editing; original output pixels retained",
+    "source_pixels_modified": false
   },
   {
     "form": 5,
-    "image": "form_05.png",
+    "image": "species_05.png",
     "family_order": [
       0,
       1,
@@ -98,12 +168,26 @@
       7,
       8
     ],
-    "generation_file": "exec-52623964-1aec-4e34-bc09-81d18aee0395.png",
-    "sha256": "77a444895e702aab0d993319cda8dcad89c6fcb2b6351b761b98eb8bf6564dcc"
+    "generation_file": "exec-91219ea5-148f-4989-be3a-426f383f7383.png",
+    "sha256": "ac6b4a0a987ee07b1d1104d07e903fbbb50f04e039f64c48fed69fbcd9d26069",
+    "note": "Nine independently designed species; row-major ID order, no shared creature template.",
+    "species_ids": [
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53
+    ],
+    "method": "AI image generation / editing; original output pixels retained",
+    "source_pixels_modified": false
   },
   {
     "form": 6,
-    "image": "form_06.png",
+    "image": "species_06.png",
     "family_order": [
       0,
       1,
@@ -115,12 +199,26 @@
       7,
       8
     ],
-    "generation_file": "exec-a0eace35-d97b-4cbb-9b10-09252348dec2.png",
-    "sha256": "3d9f61bd9edb5e666e69c027d460ff580640d092ba06e19e94410dc3fd03a67d"
+    "generation_file": "exec-7b06409b-aba4-4884-b215-ee527b625655.png",
+    "sha256": "0eb4ed4d5a8f380aab2f3c0388f1dcd79956e202dc8f009e93c1632e5d34b4c8",
+    "note": "Nine independently designed species; row-major ID order, no shared creature template.",
+    "species_ids": [
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62
+    ],
+    "method": "AI image generation / editing; original output pixels retained",
+    "source_pixels_modified": false
   },
   {
     "form": 7,
-    "image": "form_07.png",
+    "image": "species_07.png",
     "family_order": [
       0,
       1,
@@ -132,12 +230,26 @@
       7,
       8
     ],
-    "generation_file": "exec-4670a0ea-b8b9-44d1-8023-121d01983079.png",
-    "sha256": "f3c94968e343b82769d0d8e838f77b938c7d1f33d972ea05c665329b7c1ddc03"
+    "generation_file": "exec-2f41da16-91ba-4453-a938-39178522ca67.png",
+    "sha256": "265a9aa392bdf8a9ae993c9001111ce54e2098d000d3283d8659d7619490fa21",
+    "note": "Nine independently designed species; row-major ID order, no shared creature template.",
+    "species_ids": [
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71
+    ],
+    "method": "AI image generation / editing; original output pixels retained",
+    "source_pixels_modified": false
   },
   {
     "form": 8,
-    "image": "form_08.png",
+    "image": "species_08.png",
     "family_order": [
       0,
       1,
@@ -149,12 +261,26 @@
       7,
       8
     ],
-    "generation_file": "exec-17e1dc24-b4a9-4206-9093-0ef8e28abdb8.png",
-    "sha256": "6a1084fc7bf36fbb34238ccad4424341e4c1b2c421f5042eed4bd9c7d1d8b153"
+    "generation_file": "exec-15cbb9eb-20dc-4ac6-aab8-f4844a2b2360.png",
+    "sha256": "ccd7f12ade2eaf608a7a8d84567fc02ea5c86dba715f93911d101120a41c3479",
+    "note": "Nine independently designed species; row-major ID order, no shared creature template.",
+    "species_ids": [
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80
+    ],
+    "method": "AI image generation / editing; original output pixels retained",
+    "source_pixels_modified": false
   },
   {
     "form": 9,
-    "image": "form_09.png",
+    "image": "species_09.png",
     "family_order": [
       0,
       1,
@@ -166,12 +292,26 @@
       7,
       8
     ],
-    "generation_file": "exec-b4409b6a-6018-4b36-8892-d1387f6f2c79.png",
-    "sha256": "0e0ff32ca30409a7795d63a50ce9fd60e415bd97ebeddce8fd8b1885f2b72e1b"
+    "generation_file": "exec-c55e67f1-fa10-41aa-bb24-cab43a5473b9.png",
+    "sha256": "e626fd7d2a5b11369e25936676bbfc60b8ea550a6fe4928786d7ae5dfaf6b4ee",
+    "note": "Nine independently designed species; row-major ID order, no shared creature template.",
+    "species_ids": [
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89
+    ],
+    "method": "AI image generation / editing; original output pixels retained",
+    "source_pixels_modified": false
   },
   {
     "form": 10,
-    "image": "form_10.png",
+    "image": "species_10.png",
     "family_order": [
       0,
       1,
@@ -183,12 +323,26 @@
       7,
       8
     ],
-    "generation_file": "exec-259e7326-30c6-4086-8775-3f1b54a04535.png",
-    "sha256": "3ad4b5d10f113f8b8a4103addc818131ee341599dca7b36bc134e1d866f91bee"
+    "generation_file": "exec-70a2d62f-2a00-4fa8-82c4-83256e24e6da.png",
+    "sha256": "91b520d91db25df60e5e4bd0bb358e8d6e66b30175c6e17dc8f3236bd98ea679",
+    "note": "Nine independently designed species; row-major ID order, no shared creature template.",
+    "species_ids": [
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96,
+      97,
+      98
+    ],
+    "method": "AI image generation / editing; original output pixels retained",
+    "source_pixels_modified": false
   },
   {
     "form": 11,
-    "image": "form_11.png",
+    "image": "species_11.png",
     "family_order": [
       0,
       1,
@@ -200,7 +354,21 @@
       7,
       8
     ],
-    "generation_file": "exec-849d6308-afcd-4645-a181-890149be0048.png",
-    "sha256": "0929b56029008d4798ab156dff0640e04115fb3920b5d8eabc0ee0d59429abf7"
+    "generation_file": "exec-18f560ca-1737-4af0-8d73-82419040c0c2.png",
+    "sha256": "b018b435f10ee1239f58790c5ea8f65c6ee7c07cfd5870aaac8b52d460af3ec4",
+    "note": "Nine independently designed species; row-major ID order, no shared creature template.",
+    "species_ids": [
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107
+    ],
+    "method": "AI image generation / editing; original output pixels retained",
+    "source_pixels_modified": false
   }
 ]

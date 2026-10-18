@@ -1,109 +1,109 @@
-id,name,type,color,max_hp,power,skill,lore,family,form,trait,island,area,tide
-1,苔芽兽,0,83d68a,44,10,枝叶回响,与最初的守灯人一同生活，是群岛最常见的伙伴。喜欢收集柔软的苔藓。,0,0,0,0,0,0
-2,烬尾狐,1,f2a970,38,12,星火跃击,与最初的守灯人一同生活，是群岛最常见的伙伴。会把捡到的漂亮石子送给旅人。,1,0,1,0,0,-1
-3,泡鳍灵,2,79c9e9,48,9,回旋水幕,与最初的守灯人一同生活，是群岛最常见的伙伴。把贝壳中的回声当作自己的名字。,2,0,2,0,0,1
-4,灯蕨鹿,0,c5d98c,48,11,荧蕨穿刺,与最初的守灯人一同生活，是群岛最常见的伙伴。只会在信任的人面前低下额头。,3,0,3,1,0,0
-5,焰盔蟹,1,e28678,54,9,熔壳冲撞,与最初的守灯人一同生活，是群岛最常见的伙伴。会耐心修补被海浪冲坏的小巢。,4,0,4,1,0,-1
-6,雾铃鲸,2,b0addf,46,12,雾海长歌,与最初的守灯人一同生活，是群岛最常见的伙伴。用低低的歌声回答远方的伙伴。,5,0,5,1,0,1
-7,冠苔鸮,0,a3cbb2,42,14,翡翠风刃,与最初的守灯人一同生活，是群岛最常见的伙伴。记得每一位经过林间的旅人。,6,0,6,2,0,0
-8,曜羽雀,1,f2ce83,43,14,黎明焰羽,与最初的守灯人一同生活，是群岛最常见的伙伴。喜欢在第一缕晨光里练习飞翔。,7,0,7,2,0,-1
-9,星潮龙,2,8ab9d6,58,11,星河潮涌,与最初的守灯人一同生活，是群岛最常见的伙伴。把群岛上最古老的约定记在鳞片里。,8,0,8,2,0,1
-10,露角芽团,0,82d691,44,14,露角森鸣,枝角会凝聚夜露，清晨时为同伴留下淡淡的水痕。喜欢收集柔软的苔藓。,0,1,0,1,0,1
-11,赤砂绒狐,1,f2b66f,52,12,露角焰歌,枝角会凝聚夜露，清晨时为同伴留下淡淡的水痕。会把捡到的漂亮石子送给旅人。,1,1,1,1,0,0
-12,珊枝鳍灵,2,77bde9,60,10,露角潮咏,枝角会凝聚夜露，清晨时为同伴留下淡淡的水痕。把贝壳中的回声当作自己的名字。,2,1,2,1,0,1
-13,月桂鹿,0,bdd98a,44,14,露角森鸣,枝角会凝聚夜露，清晨时为同伴留下淡淡的水痕。只会在信任的人面前低下额头。,3,1,3,2,0,0
-14,琥甲蟹,1,e29076,52,12,露角焰歌,枝角会凝聚夜露，清晨时为同伴留下淡淡的水痕。会耐心修补被海浪冲坏的小巢。,4,1,4,2,0,1
-15,云帆鲸,2,b4abdf,60,10,露角潮咏,枝角会凝聚夜露，清晨时为同伴留下淡淡的水痕。用低低的歌声回答远方的伙伴。,5,1,5,2,0,0
-16,铃叶鸮,0,a2cbb5,44,14,露角森鸣,枝角会凝聚夜露，清晨时为同伴留下淡淡的水痕。记得每一位经过林间的旅人。,6,1,6,0,0,1
-17,流萤雀,1,f2d981,52,12,露角焰歌,枝角会凝聚夜露，清晨时为同伴留下淡淡的水痕。喜欢在第一缕晨光里练习飞翔。,7,1,7,0,0,0
-18,星礁龙,2,89b1d6,60,10,露角潮咏,枝角会凝聚夜露，清晨时为同伴留下淡淡的水痕。把群岛上最古老的约定记在鳞片里。,8,1,8,0,0,1
-19,蒲尾芽团,0,80d699,48,13,长尾森鸣,用长尾试探潮水的方向，尾端的纹路像一幅小航图。喜欢收集柔软的苔藓。,0,2,0,2,0,0
-20,烟尾绒狐,1,f2c36d,56,11,长尾焰歌,用长尾试探潮水的方向，尾端的纹路像一幅小航图。会把捡到的漂亮石子送给旅人。,1,2,1,2,0,1
-21,银尾鳍灵,2,76b1e9,40,15,长尾潮咏,用长尾试探潮水的方向，尾端的纹路像一幅小航图。把贝壳中的回声当作自己的名字。,2,2,2,2,0,0
-22,藤尾鹿,0,b4d989,48,13,长尾森鸣,用长尾试探潮水的方向，尾端的纹路像一幅小航图。只会在信任的人面前低下额头。,3,2,3,0,0,1
-23,旗尾蟹,1,e29a75,56,11,长尾焰歌,用长尾试探潮水的方向，尾端的纹路像一幅小航图。会耐心修补被海浪冲坏的小巢。,4,2,4,0,0,0
-24,绸尾鲸,2,b8aadf,40,15,长尾潮咏,用长尾试探潮水的方向，尾端的纹路像一幅小航图。用低低的歌声回答远方的伙伴。,5,2,5,0,0,1
-25,彗尾鸮,0,a0cbb9,48,13,长尾森鸣,用长尾试探潮水的方向，尾端的纹路像一幅小航图。记得每一位经过林间的旅人。,6,2,6,1,0,0
-26,扇尾雀,1,f2e480,56,11,长尾焰歌,用长尾试探潮水的方向，尾端的纹路像一幅小航图。喜欢在第一缕晨光里练习飞翔。,7,2,7,1,0,1
-27,卷尾龙,2,87a8d6,40,15,长尾潮咏,用长尾试探潮水的方向，尾端的纹路像一幅小航图。把群岛上最古老的约定记在鳞片里。,8,2,8,1,0,0
-28,羽芽团,0,7fd6a1,52,12,帆翼森鸣,两侧的帆翼能够借助海风滑行，落地时几乎没有声音。喜欢收集柔软的苔藓。,0,3,0,0,0,1
-29,纸翼绒狐,1,f2d06b,60,10,帆翼焰歌,两侧的帆翼能够借助海风滑行，落地时几乎没有声音。会把捡到的漂亮石子送给旅人。,1,3,1,0,0,0
-30,帆翼鳍灵,2,74a4e9,44,14,帆翼潮咏,两侧的帆翼能够借助海风滑行，落地时几乎没有声音。把贝壳中的回声当作自己的名字。,2,3,2,0,0,1
-31,浮翼鹿,0,abd987,52,12,帆翼森鸣,两侧的帆翼能够借助海风滑行，落地时几乎没有声音。只会在信任的人面前低下额头。,3,3,3,1,0,0
-32,翅盔蟹,1,e2a473,60,10,帆翼焰歌,两侧的帆翼能够借助海风滑行，落地时几乎没有声音。会耐心修补被海浪冲坏的小巢。,4,3,4,1,0,1
-33,天翼鲸,2,bca8df,44,14,帆翼潮咏,两侧的帆翼能够借助海风滑行，落地时几乎没有声音。用低低的歌声回答远方的伙伴。,5,3,5,1,0,0
-34,镜翼鸮,0,9fcbbd,52,12,帆翼森鸣,两侧的帆翼能够借助海风滑行，落地时几乎没有声音。记得每一位经过林间的旅人。,6,3,6,2,0,1
-35,双帆雀,1,f2f07e,60,10,帆翼焰歌,两侧的帆翼能够借助海风滑行，落地时几乎没有声音。喜欢在第一缕晨光里练习飞翔。,7,3,7,2,0,0
-36,翼潮龙,2,869fd6,44,14,帆翼潮咏,两侧的帆翼能够借助海风滑行，落地时几乎没有声音。把群岛上最古老的约定记在鳞片里。,8,3,8,2,0,1
-37,礁壳芽团,1,7dd6a9,56,11,礁甲焰歌,坚硬的礁甲是与海潮共同生长的证明，内侧却温暖柔软。喜欢收集柔软的苔藓。,0,4,0,1,1,0
-38,瓷甲绒狐,2,f2dd69,40,15,礁甲潮咏,坚硬的礁甲是与海潮共同生长的证明，内侧却温暖柔软。会把捡到的漂亮石子送给旅人。,1,4,1,1,1,1
-39,贝甲鳍灵,0,7297e9,48,13,礁甲森鸣,坚硬的礁甲是与海潮共同生长的证明，内侧却温暖柔软。把贝壳中的回声当作自己的名字。,2,4,2,1,1,0
-40,石衣鹿,1,a2d986,56,11,礁甲焰歌,坚硬的礁甲是与海潮共同生长的证明，内侧却温暖柔软。只会在信任的人面前低下额头。,3,4,3,2,1,1
-41,晶盔蟹,2,e2ae72,40,15,礁甲潮咏,坚硬的礁甲是与海潮共同生长的证明，内侧却温暖柔软。会耐心修补被海浪冲坏的小巢。,4,4,4,2,1,0
-42,礁背鲸,0,c1a7df,48,13,礁甲森鸣,坚硬的礁甲是与海潮共同生长的证明，内侧却温暖柔软。用低低的歌声回答远方的伙伴。,5,4,5,2,1,1
-43,盾羽鸮,1,9dcbc1,56,11,礁甲焰歌,坚硬的礁甲是与海潮共同生长的证明，内侧却温暖柔软。记得每一位经过林间的旅人。,6,4,6,0,1,0
-44,甲羽雀,2,e8f27c,40,15,礁甲潮咏,坚硬的礁甲是与海潮共同生长的证明，内侧却温暖柔软。喜欢在第一缕晨光里练习飞翔。,7,4,7,0,1,1
-45,城礁龙,0,8495d6,48,13,礁甲森鸣,坚硬的礁甲是与海潮共同生长的证明，内侧却温暖柔软。把群岛上最古老的约定记在鳞片里。,8,4,8,0,1,0
-46,冠蕊芽团,1,7cd6b1,60,10,冠棘焰歌,每一枚冠棘都记录一季风，遇到旧友时会微微发亮。喜欢收集柔软的苔藓。,0,5,0,2,1,1
-47,霜棘绒狐,2,f2eb68,44,14,冠棘潮咏,每一枚冠棘都记录一季风，遇到旧友时会微微发亮。会把捡到的漂亮石子送给旅人。,1,5,1,2,1,0
-48,星棘鳍灵,0,7189e9,52,12,冠棘森鸣,每一枚冠棘都记录一季风，遇到旧友时会微微发亮。把贝壳中的回声当作自己的名字。,2,5,2,2,1,1
-49,珠冠鹿,1,98d984,60,10,冠棘焰歌,每一枚冠棘都记录一季风，遇到旧友时会微微发亮。只会在信任的人面前低下额头。,3,5,3,0,1,0
-50,棘岩蟹,2,e2b970,44,14,冠棘潮咏,每一枚冠棘都记录一季风，遇到旧友时会微微发亮。会耐心修补被海浪冲坏的小巢。,4,5,4,0,1,1
-51,冠浪鲸,0,c6a5df,52,12,冠棘森鸣,每一枚冠棘都记录一季风，遇到旧友时会微微发亮。用低低的歌声回答远方的伙伴。,5,5,5,0,1,0
-52,晶冠鸮,1,9ccbc6,60,10,冠棘焰歌,每一枚冠棘都记录一季风，遇到旧友时会微微发亮。记得每一位经过林间的旅人。,6,5,6,1,1,1
-53,皇冠雀,2,dcf27b,44,14,冠棘潮咏,每一枚冠棘都记录一季风，遇到旧友时会微微发亮。喜欢在第一缕晨光里练习飞翔。,7,5,7,1,1,0
-54,棘脊龙,0,838cd6,52,12,冠棘森鸣,每一枚冠棘都记录一季风，遇到旧友时会微微发亮。把群岛上最古老的约定记在鳞片里。,8,5,8,1,1,1
-55,高足芽团,1,7ad6ba,40,15,苇足焰歌,长足能够稳稳站在浅水里，会在潮间带留下奇妙的脚印。喜欢收集柔软的苔藓。,0,6,0,0,1,0
-56,踏浪绒狐,2,ebf266,48,13,苇足潮咏,长足能够稳稳站在浅水里，会在潮间带留下奇妙的脚印。会把捡到的漂亮石子送给旅人。,1,6,1,0,1,1
-57,长足鳍灵,0,6f7ce9,56,11,苇足森鸣,长足能够稳稳站在浅水里，会在潮间带留下奇妙的脚印。把贝壳中的回声当作自己的名字。,2,6,2,0,1,0
-58,苇足鹿,1,8ed983,40,15,苇足焰歌,长足能够稳稳站在浅水里，会在潮间带留下奇妙的脚印。只会在信任的人面前低下额头。,3,6,3,1,1,1
-59,步桥蟹,2,e2c46f,48,13,苇足潮咏,长足能够稳稳站在浅水里，会在潮间带留下奇妙的脚印。会耐心修补被海浪冲坏的小巢。,4,6,4,1,1,0
-60,浅滩鲸,0,cca4df,56,11,苇足森鸣,长足能够稳稳站在浅水里，会在潮间带留下奇妙的脚印。用低低的歌声回答远方的伙伴。,5,6,5,1,1,1
-61,哨林鸮,1,9acbca,40,15,苇足焰歌,长足能够稳稳站在浅水里，会在潮间带留下奇妙的脚印。记得每一位经过林间的旅人。,6,6,6,2,1,0
-62,跃岸雀,2,cff279,48,13,苇足潮咏,长足能够稳稳站在浅水里，会在潮间带留下奇妙的脚印。喜欢在第一缕晨光里练习飞翔。,7,6,7,2,1,1
-63,行沙龙,0,8182d6,56,11,苇足森鸣,长足能够稳稳站在浅水里，会在潮间带留下奇妙的脚印。把群岛上最古老的约定记在鳞片里。,8,6,8,2,1,0
-64,伞蕈芽团,1,79d6c3,44,14,伞冠焰歌,伞状冠盖能挡住细雨，暴风来临时会邀请小生物躲到身边。喜欢收集柔软的苔藓。,0,7,0,1,1,1
-65,茸帽绒狐,2,ddf266,52,12,伞冠潮咏,伞状冠盖能挡住细雨，暴风来临时会邀请小生物躲到身边。会把捡到的漂亮石子送给旅人。,1,7,1,1,1,0
-66,莲帽鳍灵,0,6e6ee9,60,10,伞冠森鸣,伞状冠盖能挡住细雨，暴风来临时会邀请小生物躲到身边。把贝壳中的回声当作自己的名字。,2,7,2,1,1,1
-67,蘑伞鹿,1,84d981,44,14,伞冠焰歌,伞状冠盖能挡住细雨，暴风来临时会邀请小生物躲到身边。只会在信任的人面前低下额头。,3,7,3,2,1,0
-68,蕈盔蟹,2,e2d06d,52,12,伞冠潮咏,伞状冠盖能挡住细雨，暴风来临时会邀请小生物躲到身边。会耐心修补被海浪冲坏的小巢。,4,7,4,2,1,1
-69,伞云鲸,0,d1a2df,60,10,伞冠森鸣,伞状冠盖能挡住细雨，暴风来临时会邀请小生物躲到身边。用低低的歌声回答远方的伙伴。,5,7,5,2,1,0
-70,蘑冠鸮,1,99c7cb,44,14,伞冠焰歌,伞状冠盖能挡住细雨，暴风来临时会邀请小生物躲到身边。记得每一位经过林间的旅人。,6,7,6,0,1,1
-71,蕈羽雀,2,c2f277,52,12,伞冠潮咏,伞状冠盖能挡住细雨，暴风来临时会邀请小生物躲到身边。喜欢在第一缕晨光里练习飞翔。,7,7,7,0,1,0
-72,菌冠龙,0,8880d6,60,10,伞冠森鸣,伞状冠盖能挡住细雨，暴风来临时会邀请小生物躲到身边。把群岛上最古老的约定记在鳞片里。,8,7,8,0,1,1
-73,雾绒芽团,2,77d6cd,48,13,云纱潮咏,身边的云纱并非水汽，而是它记得的海风凝成的光。喜欢收集柔软的苔藓。,0,8,0,2,2,0
-74,烟纱绒狐,0,cef266,56,11,云纱森鸣,身边的云纱并非水汽，而是它记得的海风凝成的光。会把捡到的漂亮石子送给旅人。,1,8,1,2,2,1
-75,霞纱鳍灵,1,796ce9,40,15,云纱焰歌,身边的云纱并非水汽，而是它记得的海风凝成的光。把贝壳中的回声当作自己的名字。,2,8,2,2,2,0
-76,雾鬃鹿,2,80d987,48,13,云纱潮咏,身边的云纱并非水汽，而是它记得的海风凝成的光。只会在信任的人面前低下额头。,3,8,3,0,2,1
-77,云绒蟹,0,e2dc6b,56,11,云纱森鸣,身边的云纱并非水汽，而是它记得的海风凝成的光。会耐心修补被海浪冲坏的小巢。,4,8,4,0,2,0
-78,帷雾鲸,1,d7a1df,40,15,云纱焰歌,身边的云纱并非水汽，而是它记得的海风凝成的光。用低低的歌声回答远方的伙伴。,5,8,5,0,2,1
-79,雾披鸮,2,98c1cb,48,13,云纱潮咏,身边的云纱并非水汽，而是它记得的海风凝成的光。记得每一位经过林间的旅人。,6,8,6,1,2,0
-80,流霞雀,0,b5f275,56,11,云纱森鸣,身边的云纱并非水汽，而是它记得的海风凝成的光。喜欢在第一缕晨光里练习飞翔。,7,8,7,1,2,1
-81,烟岚龙,1,8f7ed6,40,15,云纱焰歌,身边的云纱并非水汽，而是它记得的海风凝成的光。把群岛上最古老的约定记在鳞片里。,8,8,8,1,2,0
-82,月耳芽团,2,76d6d6,52,12,月珥潮咏,垂落的月珥可以听见潮汐，夜里会轻轻敲出规律的节拍。喜欢收集柔软的苔藓。,0,9,0,0,2,1
-83,望月绒狐,0,c0f266,60,10,月珥森鸣,垂落的月珥可以听见潮汐，夜里会轻轻敲出规律的节拍。会把捡到的漂亮石子送给旅人。,1,9,1,0,2,0
-84,垂铃鳍灵,1,846ae9,44,14,月珥焰歌,垂落的月珥可以听见潮汐，夜里会轻轻敲出规律的节拍。把贝壳中的回声当作自己的名字。,2,9,2,0,2,1
-85,月珥鹿,2,7ed98e,52,12,月珥潮咏,垂落的月珥可以听见潮汐，夜里会轻轻敲出规律的节拍。只会在信任的人面前低下额头。,3,9,3,1,2,0
-86,环月蟹,0,dce26a,60,10,月珥森鸣,垂落的月珥可以听见潮汐，夜里会轻轻敲出规律的节拍。会耐心修补被海浪冲坏的小巢。,4,9,4,1,2,1
-87,听月鲸,1,de9fdf,44,14,月珥焰歌,垂落的月珥可以听见潮汐，夜里会轻轻敲出规律的节拍。用低低的歌声回答远方的伙伴。,5,9,5,1,2,0
-88,月眉鸮,2,96bccb,52,12,月珥潮咏,垂落的月珥可以听见潮汐，夜里会轻轻敲出规律的节拍。记得每一位经过林间的旅人。,6,9,6,2,2,1
-89,月翎雀,0,a7f274,60,10,月珥森鸣,垂落的月珥可以听见潮汐，夜里会轻轻敲出规律的节拍。喜欢在第一缕晨光里练习飞翔。,7,9,7,2,2,0
-90,月角龙,1,977dd6,44,14,月珥焰歌,垂落的月珥可以听见潮汐，夜里会轻轻敲出规律的节拍。把群岛上最古老的约定记在鳞片里。,8,9,8,2,2,1
-91,环光芽团,2,74ccd6,56,11,光环潮咏,环绕身体的光轮来自旧灯塔，在最暗的海夜仍然清晰可见。喜欢收集柔软的苔藓。,0,10,0,1,2,0
-92,星环绒狐,0,b2f266,40,15,光环森鸣,环绕身体的光轮来自旧灯塔，在最暗的海夜仍然清晰可见。会把捡到的漂亮石子送给旅人。,1,10,1,1,2,1
-93,涟环鳍灵,1,9069e9,48,13,光环焰歌,环绕身体的光轮来自旧灯塔，在最暗的海夜仍然清晰可见。把贝壳中的回声当作自己的名字。,2,10,2,1,2,0
-94,日晕鹿,2,7dd997,56,11,光环潮咏,环绕身体的光轮来自旧灯塔，在最暗的海夜仍然清晰可见。只会在信任的人面前低下额头。,3,10,3,2,2,1
-95,环晶蟹,0,cfe268,40,15,光环森鸣,环绕身体的光轮来自旧灯塔，在最暗的海夜仍然清晰可见。会耐心修补被海浪冲坏的小巢。,4,10,4,2,2,0
-96,光轮鲸,1,df9dda,48,13,光环焰歌,环绕身体的光轮来自旧灯塔，在最暗的海夜仍然清晰可见。用低低的歌声回答远方的伙伴。,5,10,5,2,2,1
-97,星轮鸮,2,95b6cb,56,11,光环潮咏,环绕身体的光轮来自旧灯塔，在最暗的海夜仍然清晰可见。记得每一位经过林间的旅人。,6,10,6,0,2,0
-98,环日雀,0,99f272,40,15,光环森鸣,环绕身体的光轮来自旧灯塔，在最暗的海夜仍然清晰可见。喜欢在第一缕晨光里练习飞翔。,7,10,7,0,2,1
-99,晕潮龙,1,a07bd6,48,13,光环焰歌,环绕身体的光轮来自旧灯塔，在最暗的海夜仍然清晰可见。把群岛上最古老的约定记在鳞片里。,8,10,8,0,2,0
-100,弯月芽团,2,73c1d6,60,10,弯月潮咏,弯月状的附肢会在逆风时展开，帮助它寻找归航的路。喜欢收集柔软的苔藓。,0,11,0,2,2,1
-101,镰尾绒狐,0,a3f266,44,14,弯月森鸣,弯月状的附肢会在逆风时展开，帮助它寻找归航的路。会把捡到的漂亮石子送给旅人。,1,11,1,2,2,0
-102,月弧鳍灵,1,9c67e9,52,12,弯月焰歌,弯月状的附肢会在逆风时展开，帮助它寻找归航的路。把贝壳中的回声当作自己的名字。,2,11,2,2,2,1
-103,钩月鹿,2,7bd99f,60,10,弯月潮咏,弯月状的附肢会在逆风时展开，帮助它寻找归航的路。只会在信任的人面前低下额头。,3,11,3,0,2,0
-104,弯潮蟹,0,c3e267,44,14,弯月森鸣,弯月状的附肢会在逆风时展开，帮助它寻找归航的路。会耐心修补被海浪冲坏的小巢。,4,11,4,0,2,1
-105,月牙鲸,1,df9cd3,52,12,弯月焰歌,弯月状的附肢会在逆风时展开，帮助它寻找归航的路。用低低的歌声回答远方的伙伴。,5,11,5,0,2,0
-106,月镰鸮,2,93afcb,60,10,弯月潮咏,弯月状的附肢会在逆风时展开，帮助它寻找归航的路。记得每一位经过林间的旅人。,6,11,6,1,2,1
-107,弧翼雀,0,8bf270,44,14,弯月森鸣,弯月状的附肢会在逆风时展开，帮助它寻找归航的路。喜欢在第一缕晨光里练习飞翔。,7,11,7,1,2,0
-108,弯湾龙,1,a87ad6,52,12,弯月焰歌,弯月状的附肢会在逆风时展开，帮助它寻找归航的路。把群岛上最古老的约定记在鳞片里。,8,11,8,1,2,1
+id,name,type,color,max_hp,power,skill,lore,family,form,trait,island,area,tide,skill_kind,skill_value,skill_scale,role,visual
+0,苔芽兽,0,83d68a,44,10,苔床回春,把背上的幼苗栽在干裂的脚印中，让后来者有柔软的落脚处。,0,0,0,0,0,0,leech,3,0.82,续航汲取,a squat lime moss mammal with a large sprouting seed head and four pebble feet
+1,烬尾狐,1,f2a970,38,12,炭尾引燃,尾尖只在奔跑后亮起，会用余温替夜行者烘干衣角。,1,0,1,0,0,-1,burn,10,0.93,持续灼伤,a slender orange fox with a single charcoal brush tail glowing at the tip
+2,泡鳍灵,2,79c9e9,48,9,泡膜护航,将空气藏在鳃边的泡膜中，带迷路的小虫穿过浅水。,2,0,2,0,0,1,shield,9,1.04,护盾抵御,an upright sky blue axolotl with bubble gills and transparent sail fins
+3,灯蕨鹿,0,c5d98c,48,11,蕨光汲露,鹿角上的蕨叶每晚轮流发亮，花开前会绕着湿地巡视。,3,0,3,1,0,0,leech,8,0.84,续航汲取,a small ivory deer with branching green luminous fern antlers
+4,焰盔蟹,1,e28678,54,9,熔盔封锁,以熔岩冷却后的空腔为壳，蜕壳时会留下能避雨的小屋。,4,0,4,1,0,-1,break,7,0.95,破甲压制,a broad red hermit crab wearing an obsidian volcanic furnace shell
+5,雾铃鲸,2,b0addf,46,12,雾钟续歌,下颌的钟不靠撞击发声，而会在雾变浓时随呼吸鸣响。,5,0,5,1,0,1,regen,6,1.06,持续恢复,a floating violet miniature whale with a brass bell under its chin
+6,冠苔鸮,0,a3cbb2,42,14,苔冠回声,会用不同的敲木节奏记录林路，最古老的树洞是它的乐谱。,6,0,6,2,0,0,echo,5,0.86,后续回响,a round green owl wearing a crown of moss and broad striped wings
+7,曜羽雀,1,f2ce83,43,14,曜日蓄火,每日只捡一根折断的羽毛，用它修补向阳崖壁上的巢。,7,0,7,2,0,-1,focus,4,0.97,潮息循环,a tiny gold sunbird with a radiant fan of ember feather rays
+8,星潮龙,2,8ab9d6,58,11,星潮逆转,用背鳍感受海底暗流，星光在鳞片上连成归航的线路。,8,0,8,2,0,1,surge,3,1.08,潮相爆发,a long cobalt seahorse dragon with a constellation pattern and fin crest
+9,露盏蜗,0,82d691,45,16,露盏回甘,清晨把露水分给石缝里的幼草，杯口的水线记录了夜雨。,0,1,1,1,0,1,leech,10,0.88,续航汲取,a teal snail carrying a giant dew filled lotus cup instead of shell
+10,砂炉獾,1,f2b66f,62,15,砂炉焖火,会把潮湿的细沙拍成小碗，放在腹炉旁慢慢烘干。,1,1,6,1,0,0,burn,9,0.99,持续灼伤,a stout ochre badger with a ceramic kiln belly and shovel claws
+11,珊枝海马,2,77bde9,50,14,珊林封隙,一生只守护一簇珊瑚，枝角断裂后会成为新的珊瑚苗床。,2,1,2,1,0,1,mark,8,1.1,标记增伤,a curled pink seahorse with asymmetric coral branches and spiral tail
+12,月桂螳,0,bdd98a,38,13,桂刃追月,以月桂叶遮住锋利的前肢，只剪掉被盐霜压坏的枝条。,3,1,7,2,0,0,execute,7,0.9,残血追击,an elegant mint praying mantis with laurel leaf scythes and crescent head
+13,琥珀蝎,1,e29076,55,12,琥针迟滞,尾针分泌的树脂会封存落叶，透过甲壳能看见去年春天的种子。,4,1,3,2,0,1,poison,6,1.01,缓蚀消耗,a transparent amber scorpion containing a glowing fossil seed
+14,云帆水母,2,b4abdf,43,11,云帆借风,帆顶朝向风来的方向，渔人根据它的漂移决定何时收网。,5,1,8,2,0,0,shield,5,1.12,护盾抵御,a pale blue jellyfish with a triangular cloud sail and ribbon tentacles
+15,铃叶螽,0,a2cbb5,60,10,叶铃合拍,后腿轻碰就会奏出两种音高，雨前总是先停下合奏。,6,1,4,0,0,1,echo,4,0.92,后续回响,a leaf green katydid with bronze bell shaped knees and long antennae
+16,流萤狸,1,f2d981,48,9,萤灯聚息,会把发光的腹部藏在落叶下，为夜里孵化的飞蛾指路。,7,1,0,0,0,0,focus,3,1.03,潮息循环,a dark indigo raccoon with a lantern firefly abdomen and striped tail
+17,星礁鳐,2,89b1d6,65,16,礁星折射,身体像一座缓慢迁徙的小礁，晶簇只在清澈的水中长出新棱。,8,1,5,0,0,1,break,10,0.83,破甲压制,a diamond shaped midnight manta ray covered with rose crystal reefs
+18,蒲风鼠,0,80d699,53,15,蒲伞乘流,尾端的蒲公英只会顺风张开，带着种子跃过岛间的窄沟。,0,2,2,2,0,0,shield,9,0.94,护盾抵御,a cream jerboa with huge round ears and a dandelion parachute tail
+19,赤索蛇,1,f2c36d,41,14,赤索缠烬,把身体盘成松软的结，替在寒夜里赶路的甲虫挡住冷风。,1,2,7,2,0,1,burn,8,1.05,持续灼伤,a scarlet rope snake with a glowing knot shaped crest and no limbs
+20,丝带乌贼,2,76b1e9,58,13,墨带留痕,墨汁遇海水会变成淡蓝，短暂留下它刚游过的水道。,2,2,3,2,0,0,mark,7,0.85,标记增伤,a white squid with long turquoise ribbon arms and ink calligraphy spots
+21,缎足蛛,0,b4d989,46,12,缎网伏击,会把沾湿的网收成一团，再拆成八只不会打滑的小鞋。,3,2,8,0,0,1,poison,6,0.96,缓蚀消耗,a violet jumping spider with six visible silk spindles and silk slipper feet
+22,缆锚龟,1,e29a75,63,11,缆锚破阵,休息时把锚尾扎进泥里，任凭潮水涨落也不挪动分毫。,4,2,4,0,0,0,break,5,1.07,破甲压制,a small iron grey turtle with anchor shaped shell and thick rope tail
+23,游丝海兔,2,b8aadf,51,10,游丝疗波,在退潮的水洼里拖出发亮的游丝，让同伴知道哪里还有水。,5,2,0,0,0,1,regen,4,0.87,持续恢复,a peach sea slug with long ribbon ear rhinophores and a ruffled skirt
+24,扇藻蝠,0,a0cbb9,39,9,藻扇叠响,翅膜上的孔洞让海风发出和声，它会挑最安静的洞窟过冬。,6,2,5,1,0,0,echo,3,0.98,后续回响,a flat leaf green bat with enormous kelp fan wings and tiny body
+25,金缕蜂,1,f2e480,56,16,金缕穿针,把金色的巢丝系在花梗之间，暴风来时整片花田会一同低头。,7,2,1,1,0,1,execute,10,1.09,残血追击,a golden bumblebee with spool shaped abdomen and silk thread legs
+26,飘旗鲤,2,87a8d6,44,15,旗潮聚势,鳍边像飘扬的小旗，遇到逆流便把长尾折成一道浪。,8,2,6,1,0,0,surge,9,0.89,潮相爆发,a white koi fish with red pennant fins and a floating streamer tail
+27,伞菌貘,0,7fd6a1,61,14,菌伞甘露,用长鼻翻松雨后的泥土，背上的菌伞为幼苗留下阴凉。,0,3,3,0,0,1,regen,8,1.0,持续恢复,a lilac tapir with a huge red spotted mushroom umbrella on its back
+28,烛芯蚁,1,f2d06b,49,13,烛芯燎印,熄灯时会把火苗藏进蜡壳，一队同行就像移动的夜灯。,1,3,8,0,0,0,burn,7,1.11,持续灼伤,a black ant with a tall wax candle abdomen and tiny living flame
+29,珠冠蚌,2,74a4e9,37,12,珠冠凝障,闭壳前会先把误入的小鱼送出去，珍珠因此很少完全圆整。,2,3,4,0,0,1,shield,6,0.91,护盾抵御,an open ivory clam with pearl eyes and an ornate aqua shell crown
+30,晶簇犀,0,abd987,54,11,晶棱凿甲,用晶角磨平山路的尖石，角上的划痕记录着整座岛的斜坡。,3,3,0,1,0,0,break,5,1.02,破甲压制,a low broad grey rhinoceros with a clustered emerald crystal horn
+31,冠轮甲虫,1,e2a473,42,10,冠轮截击,角轮可以卡住滚动的果实，常把最大的一个留在树根旁。,4,3,5,1,0,1,execute,4,0.82,残血追击,a burgundy stag beetle with a circular crown wheel horn
+32,冰盏企鹅,2,bca8df,59,9,冰盏续潮,颈边冰盏储存着融雪，口渴时只取最靠外的一层。,5,3,1,1,0,0,leech,3,0.93,续航汲取,a pudgy blue penguin carrying a frosted bowl shaped ice collar
+33,莲台蛙,0,9fcbbd,47,16,莲台回鸣,鸣叫时花领会一片片展开，池塘的回声能让它辨出远处的雨。,6,3,6,2,0,1,echo,10,1.04,后续回响,a green bullfrog sitting inside its own enormous pink lotus collar
+34,花火孔雀,1,f2f07e,64,15,花火盈息,求偶的尾屏只持续一次心跳，落下的火星不会烫伤青草。,7,3,2,2,0,0,focus,9,0.84,潮息循环,a tiny dark peacock with a semicircle of firework spark eye feathers
+35,陨冠蜥,2,869fd6,52,14,陨冠坠压,脚趾能牢牢吸住陡壁，夜里会趴在陨石上等待还未落下的星。,8,3,7,2,0,1,surge,8,0.95,潮相爆发,a chunky purple gecko wearing a meteorite crown and star toe pads
+36,根须鼹,1,7dd6a9,40,13,根须汲养,不用眼睛就能分辨树根的渴意，挖出的隧道总通向干燥的地方。,0,4,4,1,1,0,leech,7,1.06,续航汲取,a blind brown mole with a tangled root beard and pink spade hands
+37,熔灯鳗,2,f2dd69,57,12,熔灯灼流,潜伏在温泉出口，额前的灯会随着水温改变明暗。,1,4,0,1,1,1,burn,6,0.86,持续灼伤,a long lava orange eel with one hanging glowing furnace lure
+38,漩眼螺,0,7297e9,45,11,漩眼定标,透过螺壳中央的镜眼看世界，能在混浊海水中找到一根细针。,2,4,5,1,1,0,mark,5,0.97,标记增伤,a blue spiral nautilus with one big lens eye and curled tentacles
+39,藤盾螽,1,a2d986,62,10,藤盾绞护,遇险时把藤盾挡在更小的虫子前面，宁可少吃一口嫩叶。,3,4,1,2,1,1,shield,4,1.08,护盾抵御,a green walking stick insect with a round vine shield on its forearms
+40,铆甲犰狳,2,e2ae72,50,9,铆甲拆解,收集沉船上的铆钉压进鳞缝，卷起时像一颗旧船上的铁球。,4,4,6,2,1,0,break,3,0.88,破甲压制,a rust colored armadillo with riveted overlapping metal scales
+41,须瀑鲶,0,c1a7df,38,16,须瀑润泽,长须会挂住淡水凝成的水珠，洪水退后把它们送回浅溪。,5,4,2,2,1,1,regen,10,0.99,持续恢复,a pale teal catfish with long flowing waterfall moustache fins
+42,绒雪蛾,1,9dcbc1,55,15,绒雪残响,翅粉像细雪却不会融化，能替刚破壳的幼虫挡住急雨。,6,4,7,0,1,0,echo,9,1.1,后续回响,a white fluffy moth with snowflake antennae and ice blue velvet wings
+43,鬃焰马,2,e8f27c,43,14,鬃焰突围,奔跑时鬃毛倒向来路，在昏暗山道上留下短暂的红光。,7,4,3,0,1,1,execute,8,0.9,残血追击,a miniature obsidian pony with a vertical flaming red mane
+44,盘须海龙,0,8495d6,60,13,盘须回潮,每一圈胡须都握住一缕水流，静止时像扎根海底的水草。,8,4,8,0,1,0,surge,7,1.01,潮相爆发,a mustard leafy sea dragon with coiled whiskers and featherlike fins
+45,蜜囊熊,1,7cd6b1,48,12,蜜囊回补,从不搬走整座蜂巢，只带回巢口自然滴落的那一小口蜜。,0,5,5,2,1,1,regen,6,1.12,持续恢复,a honey brown sun bear with a transparent golden honey pouch chest
+46,煤球刺猬,2,f2eb68,65,11,煤刺闷燃,白天蜷成不起眼的煤团，夜里替花园赶走怕热的啃叶虫。,1,5,1,2,1,0,burn,5,0.92,持续灼伤,a round charcoal hedgehog with ember tipped black spikes
+47,盐晶虾,0,7189e9,53,10,盐棱刺壳,每次脱壳都留下一片盐晶，浅滩上的鸟儿靠它补充盐分。,2,5,6,2,1,1,break,4,1.03,破甲压制,a translucent rose shrimp with large cubic salt crystals on its back
+48,种荚袋鼠,1,98d984,41,9,荚种蓄息,育儿袋里装着尚未落土的种子，总等到听见雨声才把它们放下。,3,5,2,0,1,0,focus,3,0.83,潮息循环,a small olive kangaroo with a seed pod pouch and leafy tail
+49,鼓腹蟾,2,e2b970,58,16,鼓腹震纹,腹部的皮膜只在涨潮时绷紧，鼓声能传到对岸的泥滩。,4,5,7,0,1,1,echo,10,0.94,后续回响,a rust orange toad with a round tribal drum belly and short horns
+50,泡壶章鱼,0,c6a5df,46,15,泡壶回甘,喜欢住进被海水磨圆的茶壶，喷出的泡泡带着海藻的清香。,5,5,3,0,1,0,leech,9,1.05,续航汲取,a tiny aqua octopus with a ceramic teapot mantle and bubble spout
+51,绒球兔,1,9ccbc6,63,14,绒球护梦,会把掉落的绒毛铺在同伴的巢口，自己却睡在最靠风的那一边。,6,5,8,1,1,1,shield,8,0.85,护盾抵御,a soft lavender angora rabbit with huge pompom ears and cotton tail
+52,爆栗松鼠,2,dcf27b,51,13,爆栗收尾,尾壳会发出栗子爆开的脆响，能把偷藏在树皮下的坚果震下来。,7,5,4,1,1,0,execute,7,0.96,残血追击,a red squirrel with a giant chestnut shell tail cracked with fire
+53,琉囊海星,0,838cd6,39,12,琉囊涨落,囊中的空气随潮压缩放，让它像一盏缓缓升降的水灯。,8,5,0,1,1,1,surge,6,1.07,潮相爆发,a five armed turquoise starfish with translucent floating glass sacs
+54,刺篱豪猪,1,7ad6ba,56,11,刺篱留毒,背上的刺会开出很小的白花，是林间不肯移动的边界标记。,0,6,6,0,1,0,poison,5,0.87,缓蚀消耗,a moss green porcupine with a fence of living thorn branches
+55,燧角牛,2,ebf266,44,10,燧角破垒,会用角撞碎崖口的落石，火花把潮湿的石壁照得一瞬明亮。,1,6,2,0,1,1,break,4,0.98,破甲压制,a squat black bison with two flint horns sparking against each other
+56,冰叉枪鱼,0,6f7ce9,61,9,冰叉追击,长吻能把漂浮的碎冰拨开，为跟在身后的小鱼开出水路。,2,6,7,0,1,0,execute,3,1.09,残血追击,a silver marlin with a three pronged ice spear nose
+57,棘叶蜥,1,8ed983,49,16,棘叶苦露,把苦涩的露水存在背棘之间，只有与它熟识的昆虫知道如何饮用。,3,6,3,1,1,1,leech,10,0.89,续航汲取,a sharp green lizard with serrated leaf dorsal plates and thorn tail
+58,锯镰虾蛄,2,e2c46f,37,15,锯镰裂甲,前臂的锯缘总朝外折叠，以免在拥挤的岩缝里划伤邻居。,4,6,8,1,1,0,break,9,1.0,破甲压制,a crimson mantis shrimp with enormous serrated crescent forearms
+59,针毡海胆,0,cca4df,54,14,针毡凝盾,会把断掉的海草夹在针间，织成包住幼体的柔软外衣。,5,6,4,1,1,1,shield,8,1.11,护盾抵御,a purple sea urchin with knitted looking spines and a tiny white face
+60,箭羽鹭,1,9acbca,42,13,箭羽瞄线,站立时会把一根箭羽垂到水面，以倒影判断猎物真正的位置。,6,6,0,2,1,0,mark,7,0.91,标记增伤,a long legged emerald heron with arrow shaped wing feathers
+61,焰矛蜻蜓,2,cff279,59,12,焰矛蓄锋,尾端亮起前会先绕水面一圈，留下细细的热雾。,7,6,5,2,1,1,focus,6,1.02,潮息循环,a long orange dragonfly with spear shaped abdomen and four flame glass wings
+62,棱背剑鳗,0,8182d6,47,11,棱背潮压,只在深水里展开锋利的背鳍，经过珊瑚群时会把身体折得很低。,8,6,1,2,1,0,surge,5,0.82,潮相爆发,a flat cobalt ribbon eel with a long silver sword shaped dorsal edge
+63,重岩河马,1,79d6c3,64,10,重岩稳阵,把背上的大石当作浅滩，让疲惫的水鸟暂时落脚。,0,7,7,1,1,1,shield,4,0.93,护盾抵御,a chunky slate hippo with a mossy boulder saddle and square muzzle
+64,炭铠蜈蚣,2,ddf266,52,9,炭铠烙痕,每节甲壳都储存一小股热气，经过湿地时会冒出一列白烟。,1,7,3,1,1,0,burn,3,1.04,持续灼伤,a curled black and orange centipede with chunky furnace armor segments
+65,冰盾海象,0,6e6ee9,40,16,冰盾回息,会用獠牙打碎困住小鱼的薄冰，随后用身躯挡住寒流。,2,7,8,1,1,1,regen,10,0.84,持续恢复,a pale blue walrus with twin icicle tusks and huge shield cheeks
+66,木桶象,1,84d981,57,15,木桶汲泉,鼻子卷起清水时，木纹里的裂隙会暂时闭合，像重新长好的树皮。,3,7,4,2,1,0,leech,9,0.95,续航汲取,a miniature green elephant with a barrel shaped wooden body and leaf ears
+67,铁砧独角仙,2,e2d06d,45,14,铁砧震壳,总在暴雨前敲响空树干，附近的虫群便知道该收起晾晒的食物。,4,7,0,2,1,1,break,8,1.06,破甲压制,a dark beetle with an anvil shaped horn and hammer forelegs
+68,浮岛蝾,0,d1a2df,62,13,浮岛叠浪,背上的水洼与海潮相通，幼鱼会在里面度过最危险的几天。,5,7,5,2,1,0,echo,7,0.86,后续回响,a broad turquoise salamander with a tiny rocky island and pool on its back
+69,石面猿,1,99c7cb,50,12,石面识隙,面具会随年龄变厚，每多一道裂纹就学会一种新的敲石声音。,6,7,1,0,1,1,mark,6,0.97,标记增伤,a small grey monkey with a carved moss stone mask and long knuckles
+70,铜钟羊,2,c2f277,38,11,铜钟振息,两只空心角不会互相碰撞，却能在迎风时一起发出低鸣。,7,7,6,0,1,0,focus,5,1.08,潮息循环,a golden copper ram with hollow bell spiral horns
+71,玄壳鲎,0,8880d6,55,10,玄壳退潮,在沙中留下星形的爬痕，痕迹的方向总与下一次退潮一致。,8,7,2,0,1,1,surge,4,0.88,潮相爆发,a deep indigo horseshoe crab with a huge star engraved shield shell
+72,双瓣獭,2,77d6cd,43,9,双瓣并拍,会把两片落叶分给不同的同伴，再用拍水的节奏约定重逢。,0,8,8,2,2,0,echo,3,0.99,后续回响,a brown river otter holding two huge green leaf paddles
+73,双芯火蛭,0,cef266,60,16,双芯灼吸,两颗火核轮流明灭，冬季会贴着冷却的岩石慢慢移动。,1,8,4,2,2,1,leech,10,1.1,续航汲取,a short crimson leech with two glowing furnace hearts visible inside
+74,双扇蝶鱼,1,796ce9,48,15,双扇遮潮,两面扇鳍能挡住同一束光，喜欢把幼鱼藏在自己的影子里。,2,8,0,2,2,0,shield,9,0.9,护盾抵御,a turquoise butterfly fish with two enormous round fan fins
+75,叉角锹虫,2,80d987,65,14,叉角钳锋,不爱争抢树汁，会用分叉的大颚把树皮撑开，等更小的甲虫先吃。,3,8,5,0,2,1,break,8,1.01,破甲压制,an emerald stag beetle with a wide forked antler jaw
+76,双拳袋獾,0,e2dc6b,53,13,双拳决胜,拳套般的前爪平时只用来拍松土壤，巢穴里从不留尖锐石子。,4,8,1,0,2,0,execute,7,1.12,残血追击,a rust red marsupial devil with oversized glowing boxing paws
+77,对鸣海豚,1,d7a1df,41,12,对鸣定位,两片听鳍分别接收近处与远处的回声，从不把幼崽带进暗礁。,5,8,6,0,2,1,mark,6,0.92,标记增伤,a pearl white dolphin with two differently shaped echo fins
+78,双叶竹节,2,98c1cb,58,11,双叶清露,前肢总向相反的方向展开，让雨水均匀地流进脚下的泥里。,6,8,2,1,2,0,regen,5,1.03,持续恢复,a slim mint stick insect with two enormous paired leaf shields
+79,双炬萤虫,0,b5f275,46,10,双炬会息,两盏尾灯亮起的间隔就是它的名字，伙伴从不需要靠近确认。,7,8,7,1,2,1,focus,4,0.83,潮息循环,a black firefly with two bright lantern pods on forked tail
+80,双环海蛇,1,8f7ed6,63,9,双环涌流,把身体盘成两个相连的圆，幼鱼可以从中穿过而不受急流冲击。,8,8,3,1,2,0,surge,3,0.94,潮相爆发,a white and navy sea snake coiled into two luminous floating rings
+81,卷芽穿山甲,2,76d6d6,51,16,卷芽续生,每片鳞甲下面都压着一小撮苔芽，卷起身体时便是一座会呼吸的花坛。,0,9,0,0,2,1,regen,10,1.05,持续恢复,an olive pangolin with curled fern scales and a spiral bud tail
+82,螺烟蝾,0,c0f266,39,15,螺烟余烬,背上的烟囱只排出温暖的水雾，脚印旁很快就会长出耐热的青苔。,1,9,5,0,2,0,burn,9,0.85,持续灼伤,a black salamander with a spiral smoke chimney crest and orange feet
+83,涡壳鹦鹉螺,1,846ae9,56,14,涡室潮盾,壳内不同的空室存着不同温度的水，潜深时会逐一交换。,2,9,1,0,2,1,shield,8,0.96,护盾抵御,a teal chambered nautilus with a thick white spiral shell and short tentacles
+84,盘根树懒,2,7ed98e,44,13,盘根缚痕,尾根能抓住看不见的细枝，动作虽慢，却从没让树上的果子提前落下。,3,9,6,1,2,0,mark,7,1.07,标记增伤,a green sloth hanging from its own curled root tail and branch arms
+85,卷刃螳,0,dce26a,61,12,卷刃解甲,镰臂不用时卷成圆环，只有风折断活枝时才会替树修整伤口。,4,9,2,1,2,1,break,6,0.87,破甲压制,a rust mantis with two tightly curled sawblade forearms
+86,涡心海葵,1,de9fdf,49,11,涡心缓毒,触须围成一个缓慢旋转的圈，把不能食用的碎屑送回圈外。,5,9,7,1,2,0,poison,5,0.98,缓蚀消耗,a rose sea anemone with a dark spiral center and flowing teal tentacles
+87,旋翅蜂鸟,2,96bccb,37,10,旋翅复唱,悬停时翅尖像两个旋涡，总在同一朵花前留下第三次振翅的回声。,6,9,3,2,2,1,echo,4,1.09,后续回响,a tiny turquoise hummingbird with spiral translucent wings and long needle beak
+88,盘香蜗,0,a7f274,54,9,盘香聚火,壳上烟丝带着干草气味，走失的同伴会循着这道细线找到营地。,7,9,8,2,2,0,focus,3,0.89,潮息循环,a red snail with an incense coil shell emitting a soft golden wisp
+89,旋涡魟,1,977dd6,42,16,旋涡收潮,用长尾在海底画出漩涡，沉下的贝壳会整齐停在圆心。,8,9,4,2,2,1,surge,10,1.0,潮相爆发,a broad indigo stingray with a spiral tail and swirling white belly
+90,帆叶豚,2,74ccd6,59,15,帆叶共生,不擅长奔跑，便借着背上的叶帆慢慢漂过河口。,0,10,1,1,2,0,leech,9,1.11,续航汲取,a rounded green capybara with one enormous vertical banana leaf sail
+91,风炉蜥,0,b2f266,47,14,风炉焚径,迎风展开颈边的风箱褶领给腹部火核送气，夜里则把褶领收紧保温。,1,10,6,1,2,1,burn,8,0.91,持续灼伤,"a low broad red frilled desert lizard with a huge circular orange bellows collar, short blunt face, sprawled four legs and curled thick tail"
+92,帆冰燕,1,9069e9,64,13,帆冰掠隙,先把翅尖擦过浪面再起飞，冰屑会像细小的风标留在身后。,2,10,2,1,2,0,execute,7,1.02,残血追击,a blue white arctic tern with triangular icicle wings and forked tail
+93,舟叶蚱蜢,2,7dd997,52,12,舟叶稳渡,腹部像一艘窄舟，遇到积水便收起长腿，载着花粉漂到对岸。,3,10,7,2,2,1,shield,6,0.82,护盾抵御,a green grasshopper riding its own long boat shaped leaf abdomen
+94,帆背棘龙,0,cfe268,40,11,棘帆凿壁,背帆能透出琥珀色的光，幼体会躲在它投下的斑驳影子里午睡。,4,10,3,2,2,0,break,5,0.93,破甲压制,a small burgundy spinosaurus with a huge amber translucent dorsal sail
+95,浪裙海蛞蝓,1,df9dda,57,10,浪裙回旋,裙边每次起伏都会送出一点清水，附近的海草因此长得格外整齐。,5,10,8,2,2,1,regen,4,1.04,持续恢复,a white sea slug with a wide ruffled blue wave skirt and coral ears
+96,风翼飞鼠,2,95b6cb,45,9,风翼记航,飞膜上的浅色纹路记录树与树的距离，换季后会重新丈量整片树林。,6,10,4,0,2,0,mark,3,0.84,标记增伤,a tiny grey flying squirrel with green membrane wings and flat leaf tail
+97,烛帆蝠,0,99f272,62,16,烛帆叠焰,翅膜的火纹不会发热，倒挂时把整座洞穴照成温柔的琥珀色。,7,10,0,0,2,1,echo,10,0.95,后续回响,a black bat with glowing orange translucent candle flame wings
+98,天幕鲸鲨,1,a07bd6,50,15,天幕蓄潮,背部的星点会随着呼吸明灭，远看像一片缓缓卷起的夜空。,8,10,5,0,2,0,surge,9,1.06,潮相爆发,a wide navy whale shark with a galaxy spotted canopy back
+99,月钩树蛙,2,73c1d6,38,14,月钩清鸣,趾端的月钩能贴住最薄的叶子，夜风再大也不会惊醒叶背的虫。,0,11,2,2,2,1,echo,8,0.86,后续回响,a mint tree frog with crescent suction pads and a curled moon leaf on its head
+100,镰火鹭,0,a3f266,55,13,镰火终章,用弯喙捞起落水的火种，巢旁的浅滩因此总留着一点温暖。,1,11,7,2,2,0,execute,7,0.97,残血追击,a tall crimson ibis with a glowing sickle bill and black legs
+101,弧光电鳗,1,9c67e9,43,12,弧光定轨,胡须间的微光能勾出暗礁轮廓，它从不在拥挤的鱼群中放电。,2,11,3,2,2,1,mark,6,1.08,标记增伤,a pale blue electric eel bent like a crescent with yellow current whiskers
+102,钩月羚,2,7bd99f,60,11,钩月汲露,独角会接住顺风飘来的露珠，奔跑前先把它们抖落在脚边的草里。,3,11,8,0,2,0,leech,5,0.88,续航汲取,a slender white antelope with a single huge crescent green horn
+103,弯潮龙虾,0,c3e267,48,10,弯钳落毒,一大一小的弯钳分别夹住岩面与食物，只有最安静的潮夜才会离巢。,4,11,4,0,2,1,poison,4,0.99,缓蚀消耗,a dark green lobster with asymmetric crescent claws and a fan tail
+104,月牙翻车鱼,1,df9cd3,65,9,月牙护湾,圆圆的身体替近岸的小鱼挡住涌浪，转身时像月亮落进海面。,5,11,0,0,2,0,shield,3,1.1,护盾抵御,a round silver sunfish with a giant crescent tail and pearl eye
+105,月镰鹗,2,93afcb,53,16,月镰破晓,把折断的羽尖留在航标旁，飞过的鸟就知道前方的海风有多强。,6,11,5,1,2,1,break,10,0.9,破甲压制,a slate blue osprey with enormous crescent wing tips and white mask
+106,弧翼蚕,0,8bf270,41,15,弧翼养息,只在新月的夜里舒展弧翼，吐出的丝会在天亮前变成透明的绿。,7,11,1,1,2,0,focus,9,1.01,潮息循环,a tiny lime silk moth with two arch shaped emerald wings and fluffy collar
+107,弯湾海牛,1,a87ad6,58,14,弯湾归潮,把腹下的暖水推向浅湾，迁徙时仍记得每一处曾休息过的海草床。,8,11,6,1,2,1,surge,8,1.12,潮相爆发,a gentle lavender manatee with crescent flippers and curled whiskers

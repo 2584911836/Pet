@@ -12,6 +12,8 @@ XDG_DATA_HOME="$test_home/ui-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE
 
 mkdir -p "$test_home/catalog-data"
 XDG_DATA_HOME="$test_home/catalog-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 30s godot --headless --path "$project_dir" --script res://tests/catalog.gd
+mkdir -p "$test_home/species-data"
+XDG_DATA_HOME="$test_home/species-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 30s godot --headless --path "$project_dir" --script res://tests/species.gd
 if [[ "${1:-}" == "--full" ]]; then
   mkdir -p "$test_home/campaign-data" "$test_home/collection-data"
   XDG_DATA_HOME="$test_home/campaign-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 60s godot --headless --path "$project_dir" --script res://tests/campaign.gd

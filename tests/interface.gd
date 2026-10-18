@@ -103,6 +103,8 @@ func run() -> void:
 		await process_frame
 		for child in game.modal_body.get_children():
 			if child is GridContainer:
+				var scroll: ScrollContainer = game.modal_body.get_parent()
+				check(scroll.get_global_rect().encloses(child.get_global_rect()),"entire nine-card grid fits viewport on page %d" % (page+1))
 				for card in child.get_children():
 					var portrait: TextureRect = card.get_node("Content/Portrait")
 					var bounds := Rect2(Vector2.ZERO,card.size)

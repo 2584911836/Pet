@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://tjliulmub05c"
-path="res://.godot/imported/form_03.png-5a82aa9c18147c3fb6aa92ca0d102ffe.ctex"
+uid="uid://brtikarldhnxe"
+path="res://.godot/imported/species_01.png-d3d8998f9a436cbd24e71b3dc784b54b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/pets/form_03.png"
-dest_files=["res://.godot/imported/form_03.png-5a82aa9c18147c3fb6aa92ca0d102ffe.ctex"]
+source_file="res://assets/pets/species_01.png"
+dest_files=["res://.godot/imported/species_01.png-d3d8998f9a436cbd24e71b3dc784b54b.ctex"]
 
 [params]
 

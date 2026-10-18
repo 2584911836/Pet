@@ -36,6 +36,8 @@ func run() -> void:
 		check(int(species.type) >= 0 and int(species.type) < 3,"valid element "+str(id))
 		check(not str(species.skill).is_empty() and not str(species.lore).is_empty(),"skill and ecology "+str(id))
 		check(game.valid_creature(game.creature(id)),"valid runtime creature "+str(id))
+		var portrait: Texture2D = Art.portrait(id)
+		check(portrait is AtlasTexture and portrait.atlas.resource_path.contains("/species_"),"uses redesigned species art, never old template fallback %d" % id)
 		var image: Image = Art.sprite_image(id)
 		var pixels := image.get_data()
 		var rgba_hash := pixels.hex_encode().sha256_text()

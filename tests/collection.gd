@@ -58,5 +58,6 @@ func run() -> void:
 	await create_timer(0.2).timeout
 	game.queue_free()
 	await process_frame
+	await create_timer(0.15).timeout
 	print("COLLECTION RESULT: %d/107 wild recruits, %d seal attempts, %d failures" % [captured,attempts,failures])
 	quit(1 if failures else 0)

@@ -29,7 +29,7 @@ func run() -> void:
 	await process_frame
 	await process_frame
 	await RenderingServer.frame_post_draw
-	var result := viewport.get_texture().get_image().save_png("res://build/all-pets-v0.5.png")
+	var result := viewport.get_texture().get_image().save_png("res://build/all-pets-v0.7.png")
 	viewport.queue_free()
 	await process_frame
 	preload("res://scripts/pixel_art.gd").texture_cache.clear()
