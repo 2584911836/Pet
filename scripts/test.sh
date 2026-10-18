@@ -23,6 +23,8 @@ XDG_DATA_HOME="$test_home/navigation-data" XDG_CONFIG_HOME="$test_home/config" X
 mkdir -p "$test_home/walk-data"
 XDG_DATA_HOME="$test_home/walk-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 30s godot --headless --path "$project_dir" --script res://tests/world_walk.gd
 XDG_DATA_HOME="$test_home/walk-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 30s godot --headless --path "$project_dir" --script res://tests/progression.gd
+mkdir -p "$test_home/survey-data"
+XDG_DATA_HOME="$test_home/survey-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 30s godot --headless --path "$project_dir" --script res://tests/surveys.gd
 if [[ "${1:-}" == "--full" ]]; then
   mkdir -p "$test_home/campaign-data" "$test_home/collection-data"
   XDG_DATA_HOME="$test_home/campaign-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 180s godot --headless --path "$project_dir" --script res://tests/campaign.gd

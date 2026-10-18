@@ -1,5 +1,6 @@
 extends Node2D
 
+const Surveys = preload("res://scripts/surveys.gd")
 const Growth = preload("res://scripts/progression.gd")
 const Layout = preload("res://scripts/world_layout.gd")
 var health_meter: ProgressBar
@@ -199,6 +200,9 @@ func update_status() -> void:
 	journal = str(objective.step)+" · "+str(objective.progress)
 	quest_label.visible = mode == "explore"
 	quest_label.text = "[J 任务] "+journal
+	if tracked_goal == "survey":
+		var target_survey := next_survey_node()
+		quest_label.text = "[J 调查] "+(("本地区调查已归档，可继续其他地区探索" if story_flags.get("survey_report_%d" % zone,false) else "返回营地向阿岚提交调查报告") if target_survey < 0 else str(AREAS[zone][target_survey%3])+" · "+str(Surveys.POINTS[target_survey].title))
 	subtitle_label.text = str(Story.CHAPTERS[zone].title)+"  /  "+str(AREAS[zone][area])+"  ·  M 地图  J 日志  R 交谈"
 	log_label.text = message if mode == "battle" else message+"\n"+journal
 	if mode == "explore":
@@ -310,7 +314,7 @@ func _process(delta: float) -> void:
 	move_player(d)
 
 func is_grass(p: Vector2i) -> bool:
-	if Layout.path_tile(zone,area,p) or Layout.water(zone,area,p): return false
+	if p == Surveys.POINTS[zone*3+area].tile or Layout.path_tile(zone,area,p) or Layout.water(zone,area,p): return false
 	if area == 1: return (p.x >= 4 and p.x <= 9 and p.y >= 1 and p.y <= 4) or (p.x >= 12 and p.y >= 6)
 	if area == 2: return (p.x >= 5 and p.x <= 9 and p.y >= 6) or (p.x >= 12 and p.x <= 16 and p.y <= 4)
 	if zone == 1: return (p.x >= 4 and p.x <= 8 and p.y >= 6 and p.y <= 9) or (p.x >= 12 and p.x <= 16 and p.y <= 4)
@@ -349,6 +353,8 @@ func move_player(d: Vector2i) -> void:
 		if guardian_defeated: message = "本地区资格已完成。按 J 查看下一阶段，或继续调查伙伴。"
 		elif fragments >= 3 and area == 0: start_battle(int(ISLANDS[zone].boss), true)
 		else: message = "地区导师在%s赛场，需要 3 资格积分。按 J 查看任务区域。" % AREAS[zone][0]
+	elif player.distance_to(Surveys.POINTS[zone*3+area].tile) <= 1:
+		message = "附近有调查点：%s。按 R 检查并记录。" % Surveys.POINTS[zone*3+area].title
 	elif is_grass(player) and rng.randf() < 0.23:
 		start_battle(pick_encounter())
 	elif player.distance_to(Vector2i(2, 5)) <= 1:
@@ -689,7 +695,7 @@ func read_valid_save(path: String) -> Dictionary:
 	if not flags is Dictionary or flags.size() > 128: return {}
 	for key in flags:
 		if not key is String or key.length() > 80 or not flags[key] is bool: return {}
-	if data.get("tracked_goal","main") not in ["main","camp","field"]: return {}
+	if data.get("tracked_goal","main") not in ["main","camp","field","survey"]: return {}
 	var loaded = data.get("party",[])
 	var saved_reserve = data.get("reserve",[])
 	if not loaded is Array or loaded.is_empty() or loaded.size() > 6: return {}
@@ -739,6 +745,7 @@ func _draw() -> void:
 			var glow := 3+sin(walk_time*4)*2
 			WorldArt.draw_object(self,7,relic_pos+Vector2(0,20),Vector2(29,38))
 			draw_circle(relic_pos+Vector2(0,-glow),2,Color("d7fff0"))
+	draw_survey_marker()
 	draw_region_exits()
 	# Camp and qualification arena.
 	var camp := ORIGIN + Vector2(2,5)*TILE
@@ -1393,6 +1400,7 @@ func talk_keeper() -> void:
 	for topic in ["research","league","gentle"]:
 		modal_button(str(Story.KEEPER_TOPICS[topic].title),show_keeper_topic.bind(topic))
 	modal_button("下一步该去哪里？",show_quest_journal)
+	modal_button("调查札记与运输线索",show_survey_journal)
 	modal_button("查看本地区生态委托",show_keeper_quest)
 	modal_button("寻找尚未记录的同伴",keeper_hint)
 	modal_button("返回旅程",close_modal)
@@ -1604,7 +1612,10 @@ func field_npc_position() -> Vector2i:
 	return Vector2i(3,6) if area == 1 else Vector2i(7,4)
 
 func interact_nearby() -> void:
-	if mode != "explore": return
+	if mode != "explore" or busy: return
+	if player.distance_to(Surveys.POINTS[zone*3+area].tile) <= 1:
+		inspect_survey()
+		return
 	if area > 0 and player.distance_to(field_npc_position()) <= 1:
 		talk_field_npc()
 	elif player.distance_to(Vector2i(15,2)) <= 1:
@@ -1691,6 +1702,7 @@ func show_quest_journal() -> void:
 	var objective: Dictionary = Story.objective(self)
 	open_modal("训练师日志",str(objective.title)+"\n"+str(objective.step)+"\n"+str(objective.progress)+"\n\n"+str(Story.REGIONS[zone][area]))
 	enlarge_story_modal()
+	modal_button("调查札记 · %d / 9 条线索" % Surveys.count(story_flags),show_survey_journal)
 	modal_button("追踪主线目标",set_tracking.bind("main"))
 	if int(objective.zone) != zone or int(objective.area) != area:
 		modal_button("查看通往主线区域的道路 · "+str(AREAS[int(objective.zone)][int(objective.area)]),show_world_map)
@@ -1712,7 +1724,7 @@ func replay_chapter(chapter: int) -> void:
 	modal_button("返回日志",show_quest_journal)
 
 func set_tracking(goal: String) -> void:
-	if goal not in ["main","camp","field"]: return
+	if goal not in ["main","camp","field","survey"]: return
 	tracked_goal = goal
 	save_game(false)
 	close_modal()
@@ -1728,6 +1740,16 @@ func update_guide() -> void:
 		goal = "exit"
 		target = region_exit_tile(next_region) if next_region >= 0 else Vector2i(2,6)
 	elif goal == "field" and area > 0: target = field_npc_position()+Vector2i.RIGHT
+	if tracked_goal == "survey":
+		var survey_node := next_survey_node()
+		goal = "survey"
+		if survey_node < 0:
+			target = Vector2i(2,6)
+		elif survey_node == zone*3+area:
+			target = Surveys.POINTS[survey_node].tile
+		else:
+			var next_node := next_region_toward(survey_node)
+			target = region_exit_tile(next_node) if next_node >= 0 else Vector2i(2,6)
 	var queue: Array[Vector2i] = [player]
 	var previous: Dictionary = {player:player}
 	var found := false
@@ -1915,3 +1937,79 @@ func show_companion_skills(storage: bool, index: int) -> void:
 	var species: Dictionary = SPECIES[int(pets[index].species)]
 	open_modal(str(species.name)+" · 技能档案",Moves.catalogue(species)+"\n\n"+str(species.lore))
 	modal_button("返回等级与成长",show_backpack_pet.bind(storage,index))
+
+func next_survey_node() -> int:
+	for location in [area,(area+1)%3,(area+2)%3]:
+		var index: int = zone*3+location
+		if not story_flags.get(Surveys.key(index),false): return index
+	return -1
+
+func inspect_survey() -> void:
+	if mode != "explore" or busy: return
+	var index := zone*3+area
+	if player.distance_to(Surveys.POINTS[index].tile) > 1: return
+	if not story_flags.get(Surveys.key(index),false):
+		story_flags[Surveys.key(index)] = true
+		seals = mini(9999,seals+2)
+		var levels := Growth.gain(party[active],1)
+		message = "记录调查线索：胶囊 +2，训练经验 +1。"+("伙伴升级！" if levels > 0 else "")
+		audio.sfx("bell")
+		save_game(false)
+		refresh()
+	show_survey_record(index)
+
+func show_survey_record(index: int) -> void:
+	if mode != "explore" or index < 0 or index >= 9 or not story_flags.get(Surveys.key(index),false): return
+	var entry: Dictionary = Surveys.POINTS[index]
+	var afterword := "父母已平安获救。这段记录如今成为伙伴保护调查的证据。" if story_flags.get("parents_rescued",false) else "这是一条可选调查线索，不是地区资格或救援门槛。"
+	open_modal(str(entry.title),str(entry.text)+"\n\n"+afterword+"\n本条首次记录奖励：胶囊 +2、出战伙伴训练经验 +1（已领取）。")
+	enlarge_story_modal()
+	modal_button("查看调查札记 · %d / 9" % Surveys.count(story_flags),show_survey_journal)
+	modal_button("继续探索",close_modal)
+
+func show_survey_journal() -> void:
+	if mode != "explore": return
+	open_modal("调查札记 · %d / 9" % Surveys.count(story_flags),"在各区域寻找发光的记录标志，靠近后按 R。\n每条线索首次记录获得 2 枚胶囊和 1 点训练经验；每地三条齐全后，在营地向阿岚提交报告。\n调查可选，不阻塞五阶段主线。")
+	enlarge_story_modal()
+	modal_button("追踪本地区未调查地点 / 报告营地",set_tracking.bind("survey"))
+	modal_button("提交%s调查报告（%d / 3）" % [ISLANDS[zone].name,Surveys.count(story_flags,zone)],claim_survey_report)
+	modal_body.get_child(modal_body.get_child_count()-1).disabled = Surveys.count(story_flags,zone) < 3 or story_flags.get("survey_report_%d" % zone,false) or not near_keeper()
+	for z in range(3):
+		var heading := Label.new()
+		heading.text = "%s · %d / 3%s" % [ISLANDS[z].name,Surveys.count(story_flags,z)," · 报告已归档" if story_flags.get("survey_report_%d" % z,false) else ""]
+		modal_body.add_child(heading)
+		for a in range(3):
+			var index := z*3+a
+			var recorded := bool(story_flags.get(Surveys.key(index),false))
+			modal_button(("已记录 · " if recorded else "待调查 · ")+str(AREAS[z][a])+" / "+str(Surveys.POINTS[index].title),show_survey_record.bind(index))
+			modal_body.get_child(modal_body.get_child_count()-1).disabled = not recorded
+	modal_button("返回任务日志",show_quest_journal)
+	modal_button("继续探索",close_modal)
+
+func near_keeper() -> bool:
+	return player.distance_to(Vector2i(2,5)) <= 2 or player.distance_to(Vector2i(3,4)) <= 1
+
+func claim_survey_report() -> void:
+	if mode != "explore" or busy or not near_keeper() or Surveys.count(story_flags,zone) < 3 or story_flags.get("survey_report_%d" % zone,false): return
+	story_flags["survey_report_%d" % zone] = true
+	seals = mini(9999,seals+3)
+	var levels := Growth.gain(party[active],2)
+	message = "调查报告已归档：胶囊 +3，训练经验 +2。"+("伙伴升级！" if levels > 0 else "")
+	audio.sfx("win")
+	save_game(false)
+	refresh()
+	open_modal("阿岚 · 调查报告已归档",str(Surveys.REPORTS[zone])+"\n\n奖励：3 枚胶囊、出战伙伴训练经验 +2。每地报告只能交付一次。")
+	modal_button("继续探索",close_modal)
+
+func draw_survey_marker() -> void:
+	var index := zone*3+area
+	var recorded := bool(story_flags.get(Surveys.key(index),false))
+	var pos: Vector2 = ORIGIN+Vector2(Surveys.POINTS[index].tile)*TILE+Vector2(20,20)
+	var color := Color("8da9a0") if recorded else Color("f2d089")
+	var lift := 0.0 if reduce_motion or recorded else sin(walk_time*3)*3
+	draw_circle(pos+Vector2(0,9),12,Color(0.08,0.16,0.18,0.6))
+	draw_rect(Rect2(pos+Vector2(-9,-14+lift),Vector2(18,24)),color)
+	for y in range(3): draw_line(pos+Vector2(-5,-8+y*5+lift),pos+Vector2(5,-8+y*5+lift),Color("425854"),1)
+	if not recorded: draw_arc(pos,18,0,TAU,24,Color(0.95,0.82,0.51,0.5),1)
+	var font: Font = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
+	draw_string(font,pos+Vector2(-17,-24),"已记" if recorded else "调查",HORIZONTAL_ALIGNMENT_LEFT,-1,13,color)

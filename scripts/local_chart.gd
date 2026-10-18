@@ -18,6 +18,10 @@ func _draw() -> void:
 		var color := Color("f7db98") if game.region_unlocked(int(destination/3)) else Color("d49086")
 		draw_rect(Rect2(p-Vector2(10,10),Vector2(20,20)),color)
 		draw_string(font,p+Vector2(-6,5),"出",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("182e3b"))
+	var survey_index: int = game.zone*3+game.area
+	var survey_pos := OFFSET+(Vector2(game.Surveys.POINTS[survey_index].tile)+Vector2(0.5,0.5))*CELL
+	draw_circle(survey_pos,8,Color("b79bd3") if game.story_flags.get(game.Surveys.key(survey_index),false) else Color("ecd09a"))
+	draw_string(font,survey_pos+Vector2(-6,5),"查",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("182e3b"))
 	for tile in game.guide_path: draw_circle(OFFSET+(Vector2(tile)+Vector2(0.5,0.5))*CELL,2,Color("ffe6a1"))
 	for marker in [[game.player,"你",Color("f7db98")],[Vector2i(15,2),"赛" if game.area == 0 else "站",Color("bce9e1")],[Vector2i(2,5),"营",Color("fff1d2")],[Vector2i(3,4),"岚",Color("a5c8e9")]]:
 		var p := OFFSET+(Vector2(marker[0])+Vector2(0.5,0.5))*CELL
