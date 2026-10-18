@@ -46,10 +46,11 @@ func run() -> void:
 	key(KEY_D,false)
 	check(game.player == Vector2i(3,6),"physical keyboard moves character")
 	game.set_process(false)
-	key(KEY_T,true)
-	key(KEY_T,false)
+	key(KEY_J,true)
+	key(KEY_J,false)
 	await process_frame
-	check(game.tide == 1,"T key rings tidal bell")
+	check(game.modal != null and game.modal_body.get_child(0).text == "训练师日志","J opens main quest journal")
+	game.close_modal()
 	key(KEY_ESCAPE,true)
 	key(KEY_ESCAPE,false)
 	await process_frame
@@ -75,12 +76,11 @@ func run() -> void:
 	game.show_title()
 	click("开始新的旅程")
 	await process_frame
-	check(game.modal != null and game.modal_body.get_child(0).text == "新的潮汐","existing save requires overwrite confirmation")
+	check(game.modal != null and game.modal_body.get_child(0).text == "新的旅程","existing save requires overwrite confirmation")
 	click("确认开始")
 	check(FileAccess.file_exists(game.SAVE_PATH+".bak") and game.zone == 0,"new game backs up prior save")
 	game.close_modal()
 	game.zone = 0
-	game.tide = 0
 	game.player = game.relic_position(0)
 	var seals_before: int = game.seals
 	check(game.find_relic() and game.seals == seals_before+3,"tidal relic grants supplies")

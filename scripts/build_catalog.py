@@ -16,7 +16,7 @@ for record in records:
     assert 0 <= record['coverage'] < 12
 for field in ['name','skill','lore','visual']:
     assert len({r[field] for r in records})==108, field
-fields=['name','type','color','max_hp','power','skill','lore','family','form','trait','island','area','tide','skill_kind','skill_value','skill_scale','role','elements','coverage','skill_element']
+fields=['name','type','color','max_hp','power','skill','lore','family','form','trait','island','area','skill_kind','skill_value','skill_scale','role','elements','coverage','skill_element']
 path=ROOT/'scripts/game_data.gd'
 old=path.read_text()
 islands=old[old.index('const ISLANDS = '):]

@@ -86,17 +86,10 @@ func run() -> void:
 	check(game.party.size() == 2 and game.guardian_defeated and game.seals == 8, "save/load preserves roster, progress, supplies")
 	game.close_modal()
 	game.mode = "explore"
-	game.tide = 0
-	game.change_tide()
-	check(game.tide == 1, "bell changes tide")
 	game.player = Vector2i(10,5)
 	game.move_player(Vector2i(1,0))
-	check(game.player.x == 10, "high tide blocks shallow crossing")
-	game.change_tide()
-	game.move_player(Vector2i(1,0))
-	check(game.player.x == 11, "low tide opens crossing")
-	game.change_tide()
-	check(game.player.x == 10, "rising tide rescues player from flooded tile")
+	check(game.player.x == 11,"central route is permanently traversable")
+	check(game.encounter_pool(0,0).size() == 12,"all local species available without environmental switching")
 	game.start_battle(1)
 	game.focus = 0
 	var hp_before: int = game.enemy.hp

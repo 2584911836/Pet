@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://sauk6fu2chkl"
-path="res://.godot/imported/title_archipelago.png-7ebd8e9dad31b152cf40fc314ac34a29.ctex"
+uid="uid://lkfgg26wjygc"
+path="res://.godot/imported/title_starwild.png-c24ffdb8a1b69ea446818ebb14bb2ee0.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/title_archipelago.png"
-dest_files=["res://.godot/imported/title_archipelago.png-7ebd8e9dad31b152cf40fc314ac34a29.ctex"]
+source_file="res://assets/art/title_starwild.png"
+dest_files=["res://.godot/imported/title_starwild.png-c24ffdb8a1b69ea446818ebb14bb2ee0.ctex"]
 
 [params]
 

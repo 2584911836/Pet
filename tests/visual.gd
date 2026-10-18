@@ -20,7 +20,6 @@ func run() -> void:
 	game.close_modal()
 	game.refresh()
 	await capture("explore-v0.5")
-	game.tide = 1
 	game.start_battle(2)
 	await capture("battle-v0.5")
 	game.show_settings()

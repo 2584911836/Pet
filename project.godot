@@ -1,7 +1,9 @@
 ; Tidebound — Godot 4
 config_version=5
 [application]
-config/name="Tidebound · 潮汐灵约"
+config/name="Starwild · 星野伙伴"
+config/use_custom_user_dir=true
+config/custom_user_dir_name="godot/app_userdata/Tidebound · 潮汐灵约"
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 [display]

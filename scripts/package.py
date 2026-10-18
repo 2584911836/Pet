@@ -6,7 +6,7 @@ import sys
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = sys.argv[1] if len(sys.argv) > 1 else '0.8.0'
+VERSION = sys.argv[1] if len(sys.argv) > 1 else '0.9.0'
 OUT = ROOT / 'build' / 'releases'
 OUT.mkdir(parents=True, exist_ok=True)
 
@@ -22,10 +22,10 @@ files=[]
 for folder in ['scripts', 'tests', 'docs', 'assets']:
     for source in sorted((ROOT/folder).rglob('*')):
         if source.is_file() and '__pycache__' not in source.parts:
-            files.append((source,'Tidebound/'+str(source.relative_to(ROOT))))
+            files.append((source,'Starwild/'+str(source.relative_to(ROOT))))
 for name in ['project.godot','main.tscn','export_presets.cfg','README.md','.gitignore']:
-    files.append((ROOT/name,'Tidebound/'+name))
-zip_files(OUT/f'Tidebound-v{VERSION}-Godot-Source.zip',files)
+    files.append((ROOT/name,'Starwild/'+name))
+zip_files(OUT/f'Starwild-v{VERSION}-Godot-Source.zip',files)
 with (OUT/f'SHA256-v{VERSION}.txt').open('w') as output:
-    for path in sorted(OUT.glob(f'Tidebound-v{VERSION}-*.zip')):
+    for path in sorted(OUT.glob(f'Starwild-v{VERSION}-*.zip')):
         output.write(hashlib.sha256(path.read_bytes()).hexdigest()+'  '+path.name+'\n')

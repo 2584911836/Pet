@@ -1,12 +1,5 @@
 [
   {
-    "file": "title_archipelago.png",
-    "method": "AI image generation",
-    "generation_file": "exec-68a6d1bb-650a-43da-a697-a89aa2292f5c.png",
-    "source_pixels_modified": false,
-    "sha256": "dcb3d6145a9331b9477ea7e08974b1157d1b893c9c32cf47e008acce143166bc"
-  },
-  {
     "file": "world_objects.png",
     "method": "AI image generation",
     "generation_file": "exec-f975418a-ba66-4e3e-b878-6bfbbb18cf04.png",
@@ -26,5 +19,26 @@
     "generation_file": "exec-891290bf-0884-4df0-a599-3e1685342b07.png",
     "source_pixels_modified": false,
     "sha256": "7c7857c3cb48cff9a3ca31a472f7159d3349ea1a13428d57db43ccb52b445259"
+  },
+  {
+    "file": "title_starwild.png",
+    "method": "AI image generation",
+    "generation_file": "exec-2c047f12-010a-40f1-9a25-0c1b0ad83148.png",
+    "source_pixels_modified": false,
+    "sha256": "8915b39575947b2b5ef06c5bfefd75d42d62d238a7705a8d9a2da663e170a8a9"
+  },
+  {
+    "file": "yinhe_portrait.png",
+    "method": "AI image generation",
+    "generation_file": "exec-9a9d8b20-4f0d-4f4c-97e8-9d22978d6c0a.png",
+    "source_pixels_modified": false,
+    "sha256": "806975b9ced0762bb224d011783c4f3925ae0798b27dc96093acc7b55faa3069"
+  },
+  {
+    "file": "qiaodu_portrait.png",
+    "method": "AI image generation",
+    "generation_file": "exec-12b16683-a290-42f6-bf2b-b2b906cbdb3c.png",
+    "source_pixels_modified": false,
+    "sha256": "0df689e845c1ff0266f39ac79c3f944eb9629ef8c67190e66246971d5d509c95"
   }
 ]

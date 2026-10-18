@@ -25,7 +25,6 @@ func run() -> void:
 	for id in range(1,108):
 		var species: Dictionary = game.SPECIES[id]
 		game.visit_region(int(species.island),int(species.area))
-		game.tide = maxi(0,int(species.tide))
 		if not game.encounter_pool().has(id):
 			printerr("Unreachable species ",id)
 			failures += 1

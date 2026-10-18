@@ -40,7 +40,6 @@ func run() -> void:
 		game.party[0].max_hp = 1000
 		game.party[0].hp = 500
 		game.active = 0
-		game.tide = id % 2
 		game.start_battle(0)
 		game.enemy.max_hp = 1000
 		game.enemy.hp = 1000

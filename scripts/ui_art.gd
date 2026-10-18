@@ -5,7 +5,7 @@ const WorldArt = preload("res://scripts/world_art.gd")
 
 func _draw() -> void:
 	var centers := [Vector2(105,85),Vector2(325,62),Vector2(550,90)]
-	draw_rect(Rect2(0,0,660,165),Color("203e50"))
+	draw_rect(Rect2(0,0,660,165),Color("263b42"))
 	for i in range(2): draw_dashed_line(centers[i],centers[i+1],Color("9ac7c2"),2,7)
 	for i in range(3):
 		var center: Vector2 = centers[i]
@@ -18,8 +18,9 @@ func _draw() -> void:
 		draw_colored_polygon(sand,Color("bcaf8a"))
 		draw_colored_polygon(land,Color("648b70"))
 		for j in range(2): WorldArt.draw_object(self,0,center+Vector2(-23+j*19,8),Vector2(24,32))
-		WorldArt.draw_object(self,4,center+Vector2(20,13),Vector2(24,42),Color.WHITE if completed[i] else Color(0.65,0.77,0.87))
+		draw_rect(Rect2(center+Vector2(9,-6),Vector2(23,27)),Color("e6d4a4") if completed[i] else Color("a4b5bc"))
+		draw_rect(Rect2(center+Vector2(17,7),Vector2(7,14)),Color("375b6d"))
 		WorldArt.draw_object(self,2,center+Vector2(-15,28),Vector2(18,13))
 		if i == current: draw_arc(center,53,0,TAU,40,Color("f7dba1"),2)
 		var font: Font = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
-		draw_string(font,center+Vector2(-38,55),["微光岛","雾钟湾","星落屿"][i],HORIZONTAL_ALIGNMENT_LEFT,-1,17,Color("efe4c3"))
+		draw_string(font,center+Vector2(-38,55),["青芽地区","赤岩地区","星原地区"][i],HORIZONTAL_ALIGNMENT_LEFT,-1,17,Color("efe4c3"))

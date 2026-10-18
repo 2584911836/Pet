@@ -1,7 +1,7 @@
 extends RefCounted
 # All species reference explicit, inspectable skill profiles in game_data.gd.
 const KINDS = ["leech","burn","shield","regen","break","echo","focus","surge","execute","mark","poison"]
-const PASSIVES = ["共鸣技恢复 4 生命", "生命低于一半时伤害 +25%", "防御时恢复 4 生命", "共鸣技恢复 8 生命", "受到的伤害减少 2", "药草回复提高至 30", "对高生命目标的共鸣技 +20%", "普通攻击恢复 2 点潮息", "共鸣技同时抵御下一次攻击"]
+const PASSIVES = ["共鸣技恢复 4 生命", "生命低于一半时伤害 +25%", "防御时恢复 4 生命", "共鸣技恢复 8 生命", "受到的伤害减少 2", "药草回复提高至 30", "对高生命目标的共鸣技 +20%", "普通攻击恢复 2 点能量", "共鸣技同时抵御下一次攻击"]
 
 static func state() -> Dictionary:
 	return {"shield":0,"dot":0,"dot_turns":0,"regen":0,"regen_turns":0,"broken":0,"mark":0,"echo":0}
@@ -17,13 +17,13 @@ static func description(s: Dictionary) -> String:
 		"regen": effect = "获得润泽：本次及下次反击前各恢复 %d 生命" % n
 		"break": effect = "破甲：接下来受到的 2 次直接攻击各增加 %d 伤害" % n
 		"echo": effect = "蓄积回响：下一次直接攻击增加 %d 伤害" % (n*2)
-		"focus": effect = "命中返还 1 点潮息，额外恢复 %d 生命" % n
-		"surge": effect = "高潮时额外造成 %d 伤害，低潮时获得 %d 护盾" % [n*2,n*2]
+		"focus": effect = "命中返还 1 点能量，额外恢复 %d 生命" % n
+		"surge": effect = "自身生命不高于一半时额外造成 %d 伤害，否则获得 %d 护盾" % [n*2,n*2]
 		"execute": effect = "目标生命不高于一半时，额外造成 %d 伤害" % (n*3)
 		"mark": effect = "标记目标：下一次直接攻击增加 %d 伤害" % (n*2)
-	return "伤害系数 %.2f · 消耗 2 潮息\n%s" % [float(s.skill_scale),effect]
+	return "伤害系数 %.2f · 消耗 2 能量\n%s" % [float(s.skill_scale),effect]
 
-static func apply(s: Dictionary, user: Dictionary, own: Dictionary, target: Dictionary, tide: int) -> void:
+static func apply(s: Dictionary, user: Dictionary, own: Dictionary, target: Dictionary, charged: bool) -> void:
 	var n := int(s.skill_value)
 	match str(s.skill_kind):
 		"leech", "focus": user.hp = mini(int(user.max_hp),int(user.hp)+n)
@@ -40,10 +40,10 @@ static func apply(s: Dictionary, user: Dictionary, own: Dictionary, target: Dict
 		"echo": own.echo = n*2
 		"mark": target.mark = n*2
 		"surge":
-			if tide == 0: own.shield = maxi(int(own.shield),n*2)
+			if not charged: own.shield = maxi(int(own.shield),n*2)
 
-static func bonus(s: Dictionary, target: Dictionary, tide: int) -> int:
-	if s.skill_kind == "surge" and tide == 1: return int(s.skill_value)*2
+static func bonus(s: Dictionary, target: Dictionary, charged: bool) -> int:
+	if s.skill_kind == "surge" and charged: return int(s.skill_value)*2
 	if s.skill_kind == "execute" and int(target.hp)*2 <= int(target.max_hp): return int(s.skill_value)*3
 	return 0
 

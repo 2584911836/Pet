@@ -71,7 +71,7 @@ func close_story() -> void:
 	if game.modal != null: await tap(KEY_ESCAPE)
 
 func passable(point: Vector2i) -> bool:
-	return game.is_land(point) and not point in game.obstacle_tiles() and point not in [Vector2i(2,5),Vector2i(3,4)] and not (game.tide == 1 and point.x == 11)
+	return game.is_land(point) and not point in game.obstacle_tiles() and point not in [Vector2i(2,5),Vector2i(3,4)]
 
 func route(target: Vector2i) -> Array:
 	var start: Vector2i = game.player
@@ -97,15 +97,15 @@ func walk_step(destination: Vector2i) -> void:
 	var before: Vector2i = game.player
 	var direction := destination-before
 	var code: Key = KEY_A if direction.x < 0 else KEY_D if direction.x > 0 else KEY_W if direction.y < 0 else KEY_S
-	key(code,true)
 	var step_started := Time.get_ticks_msec()
 	while game.player == before and game.mode == "explore" and game.modal == null:
+		key(code,true)
+		await process_frame
+		key(code,false)
 		await process_frame
 		if Time.get_ticks_msec()-step_started > 2500:
 			abort("blocked movement to "+str(destination))
 			break
-	key(code,false)
-	await process_frame
 
 func battle() -> void:
 	encounters += 1
@@ -121,7 +121,7 @@ func battle() -> void:
 		elif not game.guardian_battle and not game.known.has(int(game.enemy.species)):
 			if game.seals <= 0: command = "撤离"
 			elif game.enemy.hp > game.enemy.max_hp*0.65 and game.focus > 0: command = "安抚"
-			else: command = "建立契约"
+			else: command = "捕捉伙伴"
 		elif game.focus >= 2: command = str(game.SPECIES[int(p.species)].skill)
 		if turn > 35: command = "撤离"
 		if not await click(command): break
@@ -148,7 +148,7 @@ func camp() -> void:
 
 func region(island: int, area: int) -> void:
 	await close_story()
-	if not await click("群岛地图"): return
+	if not await click("世界地图"): return
 	await process_frame
 	if not await click(str(game.ISLANDS[island].name)+" · "+str(game.AREAS[island][area])): return
 	await process_frame
@@ -189,33 +189,43 @@ func run() -> void:
 	game.rng.seed = 20261018
 	await process_frame
 	if not await click("开始新的旅程"): finish(); return
-	if game.modal != null and game.modal_body.get_child(0).text == "新的潮汐":
+	if game.modal != null and game.modal_body.get_child(0).text == "新的旅程":
 		if not await click("确认开始"): finish(); return
 	await close_story()
 	for island in range(3):
 		for area in range(3):
 			await region(island,area)
 			if failed: break
-			for phase in range(2):
-				if game.tide != phase: await tap(KEY_T)
-				await gather_current_pool()
-				print("JOURNEY region=%d/%d phase=%d dex=%d battles=%d steps=%d" % [island,area,phase,game.discovered(),encounters,game.steps_walked])
-				if failed: break
+			await gather_current_pool()
+			print("JOURNEY region=%d/%d dex=%d battles=%d steps=%d" % [island,area,game.discovered(),encounters,game.steps_walked])
 			if failed: break
 		if failed: break
 		await camp()
 		await tap(KEY_R)
-		if not await click("查看本岛生态委托"): break
+		if not await click("查看本地区生态委托"): break
 		if not await click("领取观察奖励"): break
 		await close_story()
 		await region(island,0)
-		if game.tide == 1: await tap(KEY_T)
 		await walk_to(Vector2i(15,2))
 		if game.mode == "battle": await battle()
 		await close_story()
-		if not game.completed[island]: abort("beacon was not completed"); break
+		if not game.completed[island]: abort("regional license was not completed"); break
+	if not failed:
+		await region(2,2)
+		await camp()
+		await walk_to(Vector2i(15,2))
+		if game.mode == "battle": await battle()
+		await close_story()
+		if not game.story_flags.get("parents_rescued",false): abort("parents were not rescued")
+	if not failed:
+		await region(2,0)
+		await camp()
+		await walk_to(Vector2i(15,2))
+		if game.mode == "battle": await battle()
+		await close_story()
+		if not game.story_flags.get("champion",false): abort("championship was not completed")
 	if not failed and (game.discovered() != 108 or game.completed.count(true) != 3 or game.keeper_rewards.count(true) != 3): abort("final objectives missing")
-	print("JOURNEY RESULT: dex=%d/108 beacons=%d/3 quests=%d/3 battles=%d actions=%d steps=%d losses=%d clicks=%d elapsed_ms=%d failed=%s" % [game.discovered(),game.completed.count(true),game.keeper_rewards.count(true),encounters,actions,game.steps_walked,losses,clicks,Time.get_ticks_msec()-started,str(failed)])
+	print("JOURNEY RESULT: dex=%d/108 licenses=%d/3 quests=%d/3 battles=%d actions=%d steps=%d losses=%d clicks=%d elapsed_ms=%d rescued=%s champion=%s failed=%s" % [game.discovered(),game.completed.count(true),game.keeper_rewards.count(true),encounters,actions,game.steps_walked,losses,clicks,Time.get_ticks_msec()-started,str(game.story_flags.get("parents_rescued",false)),str(game.story_flags.get("champion",false)),str(failed)])
 	await finish()
 
 func finish() -> void:

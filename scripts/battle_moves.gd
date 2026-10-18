@@ -11,8 +11,8 @@ static func list(s: Dictionary) -> Array:
 	]
 
 static func description(move: Dictionary, s: Dictionary) -> String:
-	var text := "[%s] · 潮息 %d · 伤害系数 %.2f" % [Elements.NAMES[int(move.element)],move.cost,move.scale]
-	if int(move.cost) == 0: text += "\n命中恢复 1 潮息（被动可提高）"
+	var text := "[%s] · 能量 %d · 伤害系数 %.2f" % [Elements.NAMES[int(move.element)],move.cost,move.scale]
+	if int(move.cost) == 0: text += "\n命中恢复 1 能量（被动可提高）"
 	if bool(move.signature): text += "\n"+preload("res://scripts/signature_skills.gd").description(s).get_slice("\n",1)
 	return text
 
