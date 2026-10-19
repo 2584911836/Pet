@@ -2,7 +2,7 @@
 config_version=5
 [application]
 config/name="Starwild · 星野伙伴"
-config/version="0.11.0"
+config/version="0.12.0"
 config/use_custom_user_dir=true
 config/custom_user_dir_name="godot/app_userdata/Tidebound · 潮汐灵约"
 run/main_scene="res://main.tscn"

@@ -27,6 +27,8 @@ mkdir -p "$test_home/survey-data"
 XDG_DATA_HOME="$test_home/survey-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 30s godot --headless --path "$project_dir" --script res://tests/surveys.gd
 mkdir -p "$test_home/report-data"
 XDG_DATA_HOME="$test_home/report-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 30s godot --headless --path "$project_dir" --script res://tests/battle_reports.gd
+mkdir -p "$test_home/expanded-data"
+XDG_DATA_HOME="$test_home/expanded-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 45s godot --headless --path "$project_dir" --script res://tests/expanded_world.gd
 if [[ "${1:-}" == "--full" ]]; then
   mkdir -p "$test_home/campaign-data" "$test_home/collection-data"
   XDG_DATA_HOME="$test_home/campaign-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 180s godot --headless --path "$project_dir" --script res://tests/campaign.gd
@@ -35,5 +37,5 @@ fi
 
 if [[ "${1:-}" == "--journey" ]]; then
   mkdir -p "$test_home/journey-data"
-  XDG_DATA_HOME="$test_home/journey-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 200s godot --headless --path "$project_dir" --script res://tests/journey.gd
+  XDG_DATA_HOME="$test_home/journey-data" XDG_CONFIG_HOME="$test_home/config" XDG_CACHE_HOME="$test_home/cache" timeout 360s godot --headless --path "$project_dir" --script res://tests/journey.gd
 fi

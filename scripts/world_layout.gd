@@ -1,6 +1,20 @@
 extends RefCounted
 # Nine deterministic environments; collisions and both maps use the same terrain.
 const TILE := 40.0
+const SIZES = [Vector2i(30,20),Vector2i(36,24),Vector2i(40,18),Vector2i(32,22),Vector2i(38,24),Vector2i(42,20),Vector2i(34,22),Vector2i(38,26),Vector2i(36,25)]
+
+const LAKES = [Rect2i(17,10,5,3),Rect2i(19,11,9,6),Rect2i(22,8,9,5),Rect2i(18,10,6,4),Rect2i(19,10,10,6),Rect2i(23,9,10,5),Rect2i(19,11,7,4),Rect2i(19,12,11,8),Rect2i(20,11,8,6)]
+const LANDMARKS = ["青芽观景台","林心古树","溪谷石桥","赤岩工坊","琥珀采样台","货运仓库","星原纪念园","银叶林池","研究站外庭"]
+
+static func anchor(zone: int, area: int) -> Vector2i:
+	return size_for(zone,area)-Vector2i(7,6)
+
+static func cache_tile(zone: int, area: int) -> Vector2i:
+	return anchor(zone,area)+Vector2i(2,2)
+
+static func size_for(zone: int, area: int) -> Vector2i:
+	return SIZES[zone*3+area]
+
 const PALETTES = [
 	["83a477","658c62","cfbd91","477f8c"], ["61845a","416b47","b7a783","386f78"], ["9ca47b","79885b","bfae88","518892"],
 	["b3916e","876e54","d1b28b","456875"], ["927b68","6e6052","b99872","334f61"], ["a99877","7c7d61","d0bd91","4d7b83"],
@@ -14,7 +28,8 @@ static func protected_tile(p: Vector2i) -> bool:
 	return corridor(p) or p.distance_to(Vector2i(2,5)) <= 2 or p.distance_to(Vector2i(3,4)) <= 1 or p.distance_to(Vector2i(3,6)) <= 1 or p.distance_to(Vector2i(7,4)) <= 1
 
 static func water(zone: int, area: int, p: Vector2i) -> bool:
-	if protected_tile(p): return false
+	if protected_tile(p) or path_tile(zone,area,p): return false
+	if LAKES[zone*3+area].has_point(p): return true
 	if zone == 1 and area == 1 and p.y == 2 and p.x >= 6 and p.x <= 9: return false
 	var supplies := [[Vector2i(7,2),Vector2i(14,8)],[Vector2i(6,8),Vector2i(13,1)],[Vector2i(6,3),Vector2i(14,7)]]
 	if area == 0 and p in supplies[zone]: return false
@@ -23,6 +38,9 @@ static func water(zone: int, area: int, p: Vector2i) -> bool:
 
 static func path_tile(zone: int, area: int, p: Vector2i) -> bool:
 	if corridor(p): return true
+	var center := anchor(zone,area)
+	if p.x == center.x-3 and p.y >= 5 and p.y <= size_for(zone,area).y-3: return true
+	if p.y == center.y+2 and p.x >= 11 and p.x <= size_for(zone,area).x-3: return true
 	if zone == 1 and area == 1 and p.y == 2 and p.x >= 6 and p.x <= 9: return true
 	if area == 0: return Rect2i(4,4,9,3).has_point(p) or (p.y == 7 and p.x <= 5)
 	if area == 1: return (p.x == 4 and p.y >= 5) or (p.y == 8 and p.x <= 11)
@@ -30,8 +48,9 @@ static func path_tile(zone: int, area: int, p: Vector2i) -> bool:
 
 static func ground(canvas: CanvasItem, game) -> void:
 	var colors: Array = PALETTES[game.zone*3+game.area]
-	for y in range(11):
-		for x in range(18):
+	var visible: Rect2i = game.visible_tile_rect()
+	for y in range(visible.position.y,visible.end.y):
+		for x in range(visible.position.x,visible.end.x):
 			var p := Vector2i(x,y)
 			var origin: Vector2 = game.ORIGIN+Vector2(p)*TILE
 			var pond := water(game.zone,game.area,p)
@@ -48,7 +67,11 @@ static func ground(canvas: CanvasItem, game) -> void:
 					if not water(game.zone,game.area,p+delta):
 						canvas.draw_line(origin,origin+(Vector2(0,40) if delta == Vector2i.LEFT else Vector2(40,0)),Color(colors[2]),3)
 			elif land and path:
-				if game.area == 0:
+				if LAKES[game.zone*3+game.area].has_point(p):
+					for plank in range(5): canvas.draw_line(origin+Vector2(plank*8,0),origin+Vector2(plank*8,40),Color("796c51"),1)
+					canvas.draw_line(origin,origin+Vector2(40,0),Color("64563e"),3)
+					canvas.draw_line(origin+Vector2(0,39),origin+Vector2(40,39),Color("64563e"),3)
+				elif game.area == 0:
 					canvas.draw_line(origin+Vector2(0,39),origin+Vector2(40,39),color.darkened(0.13),1)
 					canvas.draw_line(origin+Vector2(20*(y%2),0),origin+Vector2(20*(y%2),40),color.darkened(0.1),1)
 				elif game.area == 2 and x >= 11:
@@ -93,6 +116,7 @@ static func buildings(canvas: CanvasItem, game) -> void:
 		var base: Vector2 = game.ORIGIN+Vector2(9,8)*40
 		canvas.draw_rect(Rect2(base+Vector2(-19,-8),Vector2(38,30)),Color("75634b"))
 		canvas.draw_colored_polygon(PackedVector2Array([base+Vector2(-29,-8),base+Vector2(0,-35),base+Vector2(29,-8)]),Color("748677") if game.zone != 1 else Color("aa7758"))
+	draw_extension(canvas,game)
 
 static func house(canvas: CanvasItem, origin: Vector2, roof: Color, zone: int) -> void:
 	canvas.draw_rect(Rect2(origin+Vector2(-34,17),Vector2(80,13)),Color(0.08,0.14,0.17,0.25))
@@ -115,6 +139,12 @@ static func structure_tiles(zone: int, area: int) -> Array:
 		tiles = [Vector2i(7,1),Vector2i(8,1),Vector2i(7,2),Vector2i(8,2)]
 	elif not (zone == 1 and area == 1):
 		tiles = [Vector2i(8,7),Vector2i(9,7),Vector2i(8,8),Vector2i(9,8)]
+	var center := anchor(zone,area)
+	tiles.append(center)
+	if area == 0:
+		for base in [center+Vector2i(-1,-4),center+Vector2i(3,-1)]:
+			for dx in [-1,0]:
+				for dy in [-1,0]: tiles.append(base+Vector2i(dx,dy))
 	return tiles
 
 static func landmark(canvas: CanvasItem, game) -> void:
@@ -145,3 +175,33 @@ static func landmark(canvas: CanvasItem, game) -> void:
 	for x in [-39,75]:
 		canvas.draw_line(base+Vector2(x,30),base+Vector2(x,-34),Color("c4c4a8"),2)
 		canvas.draw_colored_polygon(PackedVector2Array([base+Vector2(x,-34),base+Vector2(x+15,-28),base+Vector2(x,-20)]),accent)
+
+static func extension_obstacles(zone: int, area: int) -> Array:
+	var result := []
+	var bounds := size_for(zone,area)
+	var density := 7 if area == 1 else 19 if area == 0 else 11
+	for y in range(2,bounds.y-2):
+		for x in range(2,bounds.x-2):
+			var p := Vector2i(x,y)
+			if x < 17 and y < 10: continue
+			if p.distance_to(anchor(zone,area)) <= 3: continue
+			if not path_tile(zone,area,p) and not water(zone,area,p) and (x*13+y*17+zone*19+area*11)%density == 0:
+				result.append(p)
+	return result
+
+static func draw_extension(canvas: CanvasItem, game) -> void:
+	var center := anchor(game.zone,game.area)
+	var base: Vector2 = game.ORIGIN+Vector2(center)*40+Vector2(20,20)
+	if game.area == 0:
+		for tile in [center+Vector2i(-1,-4),center+Vector2i(3,-1)]:
+			house(canvas,game.ORIGIN+Vector2(tile)*40,Color("9c7763") if game.zone == 0 else Color("a66551") if game.zone == 1 else Color("657e91"),game.zone)
+		canvas.draw_rect(Rect2(base+Vector2(-20,-8),Vector2(40,22)),Color("a3ada3"))
+		canvas.draw_circle(base+Vector2(0,-8),15,Color("bbc5b2"))
+	elif game.zone != 1:
+		game.WorldArt.draw_object(canvas,0,base+Vector2(0,15),Vector2(100,130),Color("c3d7bf") if game.zone == 2 else Color.WHITE)
+	else:
+		for delta in [Vector2(-20,4),Vector2(12,-8),Vector2(32,12)]:
+			game.WorldArt.draw_object(canvas,2,base+delta,Vector2(52,55),Color("d2b28f"))
+	var font: Font = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
+	canvas.draw_rect(Rect2(base+Vector2(-66,28),Vector2(142,28)),Color(0.07,0.15,0.18,0.9))
+	canvas.draw_string(font,base+Vector2(-59,48),LANDMARKS[game.zone*3+game.area],HORIZONTAL_ALIGNMENT_LEFT,132,16,Color("ebd59b"))

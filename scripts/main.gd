@@ -8,6 +8,10 @@ var battle_capture_id := -1
 const Surveys = preload("res://scripts/surveys.gd")
 const Growth = preload("res://scripts/progression.gd")
 const Layout = preload("res://scripts/world_layout.gd")
+var world_view: Control
+var obstacle_cache: Dictionary = {}
+var land_cache: Dictionary = {}
+var guide_key := ""
 var health_meter: ProgressBar
 var experience_meter: ProgressBar
 
@@ -115,6 +119,13 @@ func _ready() -> void:
 		show_title()
 
 func build_ui() -> void:
+	world_view = preload("res://scripts/world_view.gd").new()
+	world_view.game = self
+	world_view.position = ORIGIN
+	world_view.size = Vector2(720,440)
+	world_view.clip_contents = true
+	world_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(world_view)
 	var title := Label.new()
 	title.text = "S T A R W I L D   /   星野伙伴"
 	title.position = Vector2(40, 22)
@@ -131,6 +142,8 @@ func build_ui() -> void:
 	battle_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	battle_status.add_theme_font_size_override("font_size",14)
 	battle_status.modulate = Color("b8dbd3")
+	battle_status.max_lines_visible = 2
+	battle_status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	add_child(battle_status)
 	quest_label = Label.new()
 	quest_label.position = Vector2(42,101)
@@ -193,6 +206,7 @@ func add_button(caption: String, action: Callable) -> void:
 	buttons.add_child(b)
 
 func update_status() -> void:
+	world_view.visible = mode == "explore"
 	var p: Dictionary = party[active]
 	var s: Dictionary = SPECIES[int(p.species)]
 	info.text = "%s / %s\n捕捉胶囊 %d    资格积分 %d / 3\n图鉴 %d / 108    地区徽章 %d / 3\n%s  Lv.%d  [%s]\n生命 %d / %d    经验 %d / %d" % [AREAS[zone][area], "训练师旅程", seals, fragments, discovered(), completed.count(true), s.name, p.level, Elements.names(s.elements), p.hp, p.max_hp, p.xp, Growth.required(int(p.level))]
@@ -212,6 +226,7 @@ func update_status() -> void:
 	if tracked_goal == "survey":
 		var target_survey := next_survey_node()
 		quest_label.text = "[J 调查] "+(("本地区调查已归档，可继续其他地区探索" if story_flags.get("survey_report_%d" % zone,false) else "返回营地向阿岚提交调查报告") if target_survey < 0 else str(AREAS[zone][target_survey%3])+" · "+str(Surveys.POINTS[target_survey].title))
+	if tracked_goal == "expedition": quest_label.text = "[M 远行] 前往"+str(Layout.LANDMARKS[zone*3+area])+"附近领取支路补给"
 	subtitle_label.text = str(Story.CHAPTERS[zone].title)+"  /  "+str(AREAS[zone][area])+"  ·  M 地图  J 日志  R 交谈"
 	log_label.text = message if mode == "battle" else message+"\n"+journal
 	if mode == "explore":
@@ -265,7 +280,8 @@ func refresh() -> void:
 			var button: Button = buttons.get_child(buttons.get_child_count()-1)
 			button.tooltip_text = Moves.description(move,s)
 			button.disabled = busy or focus < int(move.cost)
-		battle_status.text = "定位："+str(s.role)+" · 对方 [%s] · 能量 %d/3" % [Elements.names(SPECIES[int(enemy.species)].elements),enemy_focus]+"\n同伴："+Signature.status_text(current_status())+"\n对方："+Signature.status_text(enemy_status)
+		battle_status.text = "定位："+str(s.role)+" · 对方 [%s] · 能量 %d/3" % [Elements.names(SPECIES[int(enemy.species)].elements),enemy_focus]+"\n同伴："+(Signature.status_text(current_status()) if not Signature.status_text(current_status()).is_empty() else "无状态")+"  /  对方："+(Signature.status_text(enemy_status) if not Signature.status_text(enemy_status).is_empty() else "无状态")
+		battle_status.tooltip_text = battle_status.text
 		add_button("防御\n能量 +1", turn.bind("guard"))
 		add_button("药草 ×%d\n恢复生命" % salves, turn.bind("heal"))
 		if not guardian_battle:
@@ -324,7 +340,9 @@ func _process(delta: float) -> void:
 	move_player(d)
 
 func is_grass(p: Vector2i) -> bool:
+	if p == Layout.cache_tile(zone,area): return false
 	if p == Surveys.POINTS[zone*3+area].tile or Layout.path_tile(zone,area,p) or Layout.water(zone,area,p): return false
+	if p.x >= 17 or p.y >= 10: return (int(p.x/3)+int(p.y/3)+zone+area)%3 != 0
 	if area == 1: return (p.x >= 4 and p.x <= 9 and p.y >= 1 and p.y <= 4) or (p.x >= 12 and p.y >= 6)
 	if area == 2: return (p.x >= 5 and p.x <= 9 and p.y >= 6) or (p.x >= 12 and p.x <= 16 and p.y <= 4)
 	if zone == 1: return (p.x >= 4 and p.x <= 8 and p.y >= 6 and p.y <= 9) or (p.x >= 12 and p.x <= 16 and p.y <= 4)
@@ -363,6 +381,8 @@ func move_player(d: Vector2i) -> void:
 		if guardian_defeated: message = "本地区资格已完成。按 J 查看下一阶段，或继续调查伙伴。"
 		elif fragments >= 3 and area == 0: start_battle(int(ISLANDS[zone].boss), true)
 		else: message = "地区导师在%s赛场，需要 3 资格积分。按 J 查看任务区域。" % AREAS[zone][0]
+	elif player.distance_to(Layout.cache_tile(zone,area)) <= 1:
+		message = "发现远行补给点，按 R 查看。"
 	elif player.distance_to(Surveys.POINTS[zone*3+area].tile) <= 1:
 		message = "附近有调查点：%s。按 R 检查并记录。" % Surveys.POINTS[zone*3+area].title
 	elif is_grass(player) and rng.randf() < 0.23:
@@ -669,6 +689,7 @@ func save_game(notify: bool = true) -> void:
 		refresh()
 
 func load_game() -> void:
+	guide_key = ""
 	last_battle_report.clear()
 	battle_log = BattleLog.new()
 	if not FileAccess.file_exists(SAVE_PATH): return
@@ -702,7 +723,8 @@ func load_game() -> void:
 	guardian_defeated = bool(completed[zone])
 	collection_rewarded = bool(data.get("collection_rewarded",false))
 	keeper_rewards = data.get("keeper_rewards",[false,false,false])
-	player = Vector2i(clampi(int(data.get("x",2)),1,16),clampi(int(data.get("y",5)),1,9))
+	var bounds := map_size()
+	player = Vector2i(clampi(int(data.get("x",2)),1,bounds.x-2),clampi(int(data.get("y",5)),1,bounds.y-2))
 	if player in obstacle_tiles() or player == Vector2i(2,5) or not is_land(player): player = Vector2i(2,6)
 	message = "主存档损坏，已恢复上一份备份。" if recovered else "已恢复上次的旅程。"
 
@@ -725,7 +747,7 @@ func read_valid_save(path: String) -> Dictionary:
 	if not flags is Dictionary or flags.size() > 128: return {}
 	for key in flags:
 		if not key is String or key.length() > 80 or not flags[key] is bool: return {}
-	if data.get("tracked_goal","main") not in ["main","camp","field","survey"]: return {}
+	if data.get("tracked_goal","main") not in ["main","camp","field","survey","expedition"]: return {}
 	var loaded = data.get("party",[])
 	var saved_reserve = data.get("reserve",[])
 	if not loaded is Array or loaded.is_empty() or loaded.size() > 6: return {}
@@ -754,50 +776,59 @@ func _draw() -> void:
 	if mode == "battle":
 		draw_battle()
 		return
-	Layout.ground(self,self)
+	world_view.queue_redraw()
+	var font: Font = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
+	draw_string(font,Vector2(43,605),str(Layout.FEATURES[zone*3+area])+"  /  坐标 %d,%d  ·  M 全区地图" % [player.x,player.y],HORIZONTAL_ALIGNMENT_LEFT,718,13,Color("b6c9bf"))
+
+func draw_exploration(canvas: CanvasItem) -> void:
+	canvas.draw_set_transform(-ORIGIN-camera_offset())
+	Layout.ground(canvas,self)
 	for tile in obstacle_tiles():
 		if area > 0 and tile == field_npc_position(): continue
 		if tile in Layout.structure_tiles(zone,area): continue
-		if is_land(tile): draw_tree(ORIGIN+Vector2(tile)*TILE+Vector2(20,23),zone)
-	Layout.buildings(self,self)
-	for y in range(1,10):
-		for x in range(1,17):
+		if visible_tile_rect().grow(2).has_point(tile) and is_land(tile): draw_tree(ORIGIN+Vector2(tile)*TILE+Vector2(20,23),zone,canvas)
+	Layout.buildings(canvas,self)
+	var visible := visible_tile_rect()
+	for y in range(visible.position.y,visible.end.y):
+		for x in range(visible.position.x,visible.end.x):
 			if (x*7+y*13+zone)%17 == 0 and not is_grass(Vector2i(x,y)) and x != 11 and is_land(Vector2i(x,y)):
 				var flower := ORIGIN+Vector2(x,y)*TILE+Vector2(7,12)
-				if is_land(Vector2i(x,y)): WorldArt.draw_object(self,2,flower+Vector2(6,9),Vector2(17,14))
-				draw_rect(Rect2(flower,Vector2(4,7)),Color("507c65"))
-				draw_rect(Rect2(flower+Vector2(-2,-2),Vector2(8,5)),Color("e8d7a1") if zone != 1 else Color("c7b3d8"))
+				if is_land(Vector2i(x,y)): WorldArt.draw_object(canvas,2,flower+Vector2(6,9),Vector2(17,14))
+				canvas.draw_rect(Rect2(flower,Vector2(4,7)),Color("507c65"))
+				canvas.draw_rect(Rect2(flower+Vector2(-2,-2),Vector2(8,5)),Color("e8d7a1") if zone != 1 else Color("c7b3d8"))
 	for tile in guide_path:
-		draw_circle(ORIGIN+Vector2(tile)*TILE+Vector2(20,28),2,Color("f5dba2"))
+		canvas.draw_circle(ORIGIN+Vector2(tile)*TILE+Vector2(20,28),2,Color("f5dba2"))
 	for i in range(2):
 		if area == 0 and not relics[zone*2+i]:
 			var relic_pos := ORIGIN+Vector2(relic_position(i))*TILE+Vector2(20,20)
 			var glow := 3+sin(walk_time*4)*2
-			WorldArt.draw_object(self,7,relic_pos+Vector2(0,20),Vector2(29,38))
-			draw_circle(relic_pos+Vector2(0,-glow),2,Color("d7fff0"))
-	draw_survey_marker()
-	draw_region_exits()
+			WorldArt.draw_object(canvas,7,relic_pos+Vector2(0,20),Vector2(29,38))
+			canvas.draw_circle(relic_pos+Vector2(0,-glow),2,Color("d7fff0"))
+	draw_expedition_cache(canvas)
+	draw_survey_marker(canvas)
+	draw_region_exits(canvas)
 	# Camp and qualification arena.
 	var camp := ORIGIN + Vector2(2,5)*TILE
-	WorldArt.draw_object(self,3,camp+Vector2(20,40),Vector2(62,47))
-	WorldArt.draw_object(self,6,camp+Vector2(53,38),Vector2(16,28))
-	Layout.landmark(self,self)
+	WorldArt.draw_object(canvas,3,camp+Vector2(20,40),Vector2(62,47))
+	WorldArt.draw_object(canvas,6,camp+Vector2(53,38),Vector2(16,28))
+	Layout.landmark(canvas,self)
 	var map_font: Font = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
-	draw_string(map_font,ORIGIN+Vector2(54,193),"营地",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("fff0c6"))
-	draw_string(map_font,ORIGIN+Vector2(580,64),"研究站" if zone == 2 and area == 2 else "赛场" if area == 0 else "巡查站",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("fff0c6"))
-	preload("res://scripts/pixel_art.gd").draw_creature(self,ORIGIN+companion_visual*TILE+Vector2(20,25),int(party[active].species),0.32,0 if reduce_motion else walk_time)
+	canvas.draw_string(map_font,ORIGIN+Vector2(54,193),"营地",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("fff0c6"))
+	canvas.draw_string(map_font,ORIGIN+Vector2(580,64),"研究站" if zone == 2 and area == 2 else "赛场" if area == 0 else "巡查站",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("fff0c6"))
+	preload("res://scripts/pixel_art.gd").draw_creature(canvas,ORIGIN+companion_visual*TILE+Vector2(20,25),int(party[active].species),0.32,0 if reduce_motion else walk_time)
 	var keeper_pos := ORIGIN+Vector2(3,4)*TILE
-	draw_texture_rect(preload("res://scripts/pixel_art.gd").keeper_token(),Rect2(keeper_pos-Vector2(7,12),Vector2(54,54)),false,Color(0.72,0.86,1))
-	draw_string(map_font,keeper_pos+Vector2(-2,-5),"阿岚",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("fff0c6"))
+	canvas.draw_texture_rect(preload("res://scripts/pixel_art.gd").keeper_token(),Rect2(keeper_pos-Vector2(7,12),Vector2(54,54)),false,Color(0.72,0.86,1))
+	canvas.draw_string(map_font,keeper_pos+Vector2(-2,-5),"阿岚",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("fff0c6"))
 	if area > 0:
 		var npc_pos := ORIGIN+Vector2(field_npc_position())*TILE
-		draw_texture_rect(preload("res://scripts/pixel_art.gd").hero_portrait() if area == 1 else preload("res://scripts/pixel_art.gd").keeper_token(),Rect2(npc_pos-Vector2(7,12),Vector2(54,54)),false,Color("c1dcac") if area == 1 else Color("e3c19e"))
-		draw_string(map_font,npc_pos+Vector2(-8,-7),"茵禾" if area == 1 else "乔渡",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("fff0c6"))
-		if not story_flags.get("field_reward_%d_%d" % [zone,area],false): draw_string(map_font,npc_pos+Vector2(14,-26),"!",HORIZONTAL_ALIGNMENT_LEFT,-1,21,Color("ffe49b"))
+		canvas.draw_texture_rect(preload("res://scripts/pixel_art.gd").hero_portrait() if area == 1 else preload("res://scripts/pixel_art.gd").keeper_token(),Rect2(npc_pos-Vector2(7,12),Vector2(54,54)),false,Color("c1dcac") if area == 1 else Color("e3c19e"))
+		canvas.draw_string(map_font,npc_pos+Vector2(-8,-7),"茵禾" if area == 1 else "乔渡",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("fff0c6"))
+		if not story_flags.get("field_reward_%d_%d" % [zone,area],false): canvas.draw_string(map_font,npc_pos+Vector2(14,-26),"!",HORIZONTAL_ALIGNMENT_LEFT,-1,21,Color("ffe49b"))
 	var hero := ORIGIN + visual_player*TILE
-	draw_string(map_font,hero+Vector2(-1,-8),"洛汐",HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("fff0c6"))
-	draw_rect(Rect2(hero+Vector2(10,30),Vector2(24,6)),Color("50665a"))
-	draw_texture_rect(preload("res://scripts/pixel_art.gd").hero_portrait(false,1+int(walk_time*12)%2 if visual_player.distance_to(Vector2(player)) > 0.04 else 0),Rect2(hero-Vector2(7,12),Vector2(54,54)),false)
+	canvas.draw_string(map_font,hero+Vector2(-1,-8),"洛汐",HORIZONTAL_ALIGNMENT_LEFT,-1,12,Color("fff0c6"))
+	canvas.draw_rect(Rect2(hero+Vector2(10,30),Vector2(24,6)),Color("50665a"))
+	canvas.draw_texture_rect(preload("res://scripts/pixel_art.gd").hero_portrait(false,1+int(walk_time*12)%2 if visual_player.distance_to(Vector2(player)) > 0.04 else 0),Rect2(hero-Vector2(7,12),Vector2(54,54)),false)
+	canvas.draw_set_transform(Vector2.ZERO)
 
 func draw_beast(pos: Vector2, id: int, scale_factor: float) -> void:
 	draw_ellipse_shadow(pos+Vector2(0,49)*scale_factor,Vector2(50,10)*scale_factor)
@@ -971,6 +1002,7 @@ func confirm_new_game() -> void:
 	else: new_game()
 
 func new_game() -> void:
+	guide_key = ""
 	last_battle_report.clear()
 	battle_log = BattleLog.new()
 	if FileAccess.file_exists(SAVE_PATH): DirAccess.copy_absolute(SAVE_PATH,SAVE_PATH+".bak")
@@ -1212,6 +1244,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif event.button_index == JOY_BUTTON_Y: rest()
 
 func obstacle_tiles() -> Array:
+	var key := zone*3+area
+	if obstacle_cache.has(key): return obstacle_cache[key]
 	var tiles: Array
 	if zone == 1: tiles = [Vector2i(2,2),Vector2i(3,2),Vector2i(4,3),Vector2i(8,2),Vector2i(9,2),Vector2i(13,8),Vector2i(14,8),Vector2i(3,9)]
 	elif zone == 2: tiles = [Vector2i(2,2),Vector2i(3,2),Vector2i(8,8),Vector2i(9,8),Vector2i(13,3),Vector2i(14,3),Vector2i(3,8),Vector2i(4,8)]
@@ -1227,15 +1261,18 @@ func obstacle_tiles() -> Array:
 		if structure not in tiles: tiles.append(structure)
 	# Keep the road network clear, including every portal approach.
 	tiles = tiles.filter(func(tile): return not Layout.corridor(tile))
+	for extra in Layout.extension_obstacles(zone,area):
+		if extra not in tiles: tiles.append(extra)
 	if area > 0: tiles.append(field_npc_position())
+	obstacle_cache[key] = tiles
 	return tiles
 
-func draw_tree(pos: Vector2, variant: int) -> void:
+func draw_tree(pos: Vector2, variant: int, canvas: CanvasItem) -> void:
 	if zone == 1:
-		WorldArt.draw_object(self,2,pos+Vector2(0,14),Vector2(46,41),Color("d6aa8b"))
+		WorldArt.draw_object(canvas,2,pos+Vector2(0,14),Vector2(46,41),Color("d6aa8b"))
 		return
 	var tint := Color.WHITE if variant == 0 else Color(0.8,0.85,1) if variant == 1 else Color(1,0.91,0.77)
-	WorldArt.draw_object(self,0,pos+Vector2(0,17),Vector2(48,62),tint)
+	WorldArt.draw_object(canvas,0,pos+Vector2(0,17),Vector2(48,62),tint)
 
 func relic_position(index: int) -> Vector2i:
 	var positions := [[Vector2i(7,2),Vector2i(14,8)],[Vector2i(6,8),Vector2i(13,1)],[Vector2i(6,3),Vector2i(14,7)]]
@@ -1387,14 +1424,40 @@ func _exit_tree() -> void:
 	preload("res://scripts/pixel_art.gd").texture_cache.clear()
 	WorldArt.cache.clear()
 
+func map_size() -> Vector2i:
+	return Layout.size_for(zone,area)
+
+func camera_offset() -> Vector2:
+	var bounds := Vector2(map_size())*TILE
+	var desired := visual_player*TILE+Vector2(TILE*0.5,TILE*0.5)-Vector2(360,220)
+	return Vector2(clampf(desired.x,0,maxf(0,bounds.x-720)),clampf(desired.y,0,maxf(0,bounds.y-440)))
+
+func visible_tile_rect() -> Rect2i:
+	var start := Vector2i(camera_offset()/TILE)-Vector2i.ONE
+	var end := start+Vector2i(21,14)
+	var bounds := map_size()
+	return Rect2i(Vector2i(maxi(0,start.x),maxi(0,start.y)),Vector2i(mini(bounds.x,end.x),mini(bounds.y,end.y))-Vector2i(maxi(0,start.x),maxi(0,start.y)))
+
 func is_land(point: Vector2i) -> bool:
+	var bounds := map_size()
+	if point.x < 0 or point.y < 0 or point.x >= bounds.x or point.y >= bounds.y: return false
+	var key := zone*3+area
+	if not land_cache.has(key):
+		var cells := PackedByteArray()
+		cells.resize(bounds.x*bounds.y)
+		for y in range(bounds.y):
+			for x in range(bounds.x): cells[y*bounds.x+x] = 1 if terrain_land(Vector2i(x,y)) else 0
+		land_cache[key] = cells
+	return land_cache[key][point.y*bounds.x+point.x] == 1
+
+func terrain_land(point: Vector2i) -> bool:
 	if exit_destination(point) >= 0: return true
+	var bounds := map_size()
+	if point.x < 1 or point.x >= bounds.x-1 or point.y < 1 or point.y >= bounds.y-1: return false
 	if Layout.water(zone,area,point): return false
-	if point.x < 1 or point.x > 16 or point.y < 1 or point.y > 9: return false
-	if point.y == 1 and (point.x < 3 or point.x > 14): return false
+	if point.y == 1 and (point.x < 3 or point.x >= bounds.x-3): return false
 	if point.y == 2 and point.x == 1: return false
-	if point.y == 9 and (point.x < 2 or point.x > 15): return false
-	if area == 2 and point.y == 1 and point.x in [3,14]: return false
+	if point.y == bounds.y-2 and (point.x < 2 or point.x >= bounds.x-2): return false
 	return true
 
 func reset_visual_positions() -> void:
@@ -1648,6 +1711,9 @@ func field_npc_position() -> Vector2i:
 
 func interact_nearby() -> void:
 	if mode != "explore" or busy: return
+	if player.distance_to(Layout.cache_tile(zone,area)) <= 1:
+		inspect_expedition_cache()
+		return
 	if player.distance_to(Surveys.POINTS[zone*3+area].tile) <= 1:
 		inspect_survey()
 		return
@@ -1759,15 +1825,18 @@ func replay_chapter(chapter: int) -> void:
 	modal_button("返回日志",show_quest_journal)
 
 func set_tracking(goal: String) -> void:
-	if goal not in ["main","camp","field","survey"]: return
+	if goal not in ["main","camp","field","survey","expedition"]: return
 	tracked_goal = goal
 	save_game(false)
 	close_modal()
 	refresh()
 
 func update_guide() -> void:
-	guide_path.clear()
 	var objective: Dictionary = Story.objective(self)
+	var next_key := JSON.stringify([zone,area,player.x,player.y,tracked_goal,objective.goal,objective.zone,objective.area,completed,next_survey_node() if tracked_goal == "survey" else -1])
+	if guide_key == next_key: return
+	guide_key = next_key
+	guide_path.clear()
 	var goal: String = str(objective.goal) if tracked_goal == "main" else tracked_goal
 	var target := Vector2i(15,2) if goal == "arena" else Vector2i(2,6)
 	if tracked_goal == "main" and (int(objective.zone) != zone or int(objective.area) != area):
@@ -1785,6 +1854,7 @@ func update_guide() -> void:
 		else:
 			var next_node := next_region_toward(survey_node)
 			target = region_exit_tile(next_node) if next_node >= 0 else Vector2i(2,6)
+	if tracked_goal == "expedition": target = Layout.cache_tile(zone,area)
 	var queue: Array[Vector2i] = [player]
 	var previous: Dictionary = {player:player}
 	var found := false
@@ -1814,6 +1884,8 @@ func show_local_map() -> void:
 	chart.game = self
 	chart.custom_minimum_size = Vector2(660,275)
 	modal_body.add_child(chart)
+	modal_button("追踪远行补给 · "+str(Layout.LANDMARKS[zone*3+area]),set_tracking.bind("expedition"))
+	modal_body.get_child(modal_body.get_child_count()-1).disabled = story_flags.get("expedition_%d" % (zone*3+area),false)
 	modal_button("查看世界地图 / 切换地区",show_world_map)
 	modal_button("查看任务日志",show_quest_journal)
 	modal_button("返回探索",close_modal)
@@ -1895,14 +1967,14 @@ func region_exit_tile(destination: int) -> Vector2i:
 	var here := zone*3+area
 	if destination not in connected_regions(here): return Vector2i(-1,-1)
 	if int(destination/3) < zone: return Vector2i(0,5)
-	if int(destination/3) > zone: return Vector2i(17,5)
+	if int(destination/3) > zone: return Vector2i(map_size().x-1,5)
 	var next_area := destination%3
-	if area == 0: return Vector2i(11,0) if next_area == 1 else Vector2i(17,5)
-	if area == 1: return Vector2i(11,10) if next_area == 0 else Vector2i(17,5)
+	if area == 0: return Vector2i(11,0) if next_area == 1 else Vector2i(map_size().x-1,5)
+	if area == 1: return Vector2i(11,map_size().y-1) if next_area == 0 else Vector2i(map_size().x-1,5)
 	return Vector2i(0,5) if next_area == 0 else Vector2i(11,0)
 
 func exit_destination(tile: Vector2i) -> int:
-	if tile.x > 0 and tile.x < 17 and tile.y > 0 and tile.y < 10: return -1
+	if tile.x > 0 and tile.x < map_size().x-1 and tile.y > 0 and tile.y < map_size().y-1: return -1
 	for destination in connected_regions(zone*3+area):
 		if region_exit_tile(destination) == tile: return destination
 	return -1
@@ -1923,9 +1995,10 @@ func cross_region_exit(destination: int) -> void:
 	zone = next_zone
 	area = next_area
 	var gate := region_exit_tile(origin)
+	var destination_bounds := map_size()
 	zone = former_zone
 	area = former_area
-	var arrival := gate+Vector2i.RIGHT if gate.x == 0 else gate+Vector2i.LEFT if gate.x == 17 else gate+Vector2i.DOWN if gate.y == 0 else gate+Vector2i.UP
+	var arrival := gate+Vector2i.RIGHT if gate.x == 0 else gate+Vector2i.LEFT if gate.x == destination_bounds.x-1 else gate+Vector2i.DOWN if gate.y == 0 else gate+Vector2i.UP
 	steps_walked += 1
 	visit_region(next_zone,next_area,arrival)
 	step_timer = 0.22
@@ -1947,25 +2020,24 @@ func next_region_toward(destination: int) -> int:
 				queue.append(neighbor)
 	return -1
 
-func draw_region_exits() -> void:
+func draw_region_exits(canvas: CanvasItem) -> void:
 	var font: Font = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
 	for destination in connected_regions(zone*3+area):
 		var tile := region_exit_tile(destination)
 		var pos := ORIGIN+Vector2(tile)*TILE
 		var unlocked := region_unlocked(int(destination/3))
 		var color := Color("e9ce8c") if unlocked else Color("c17c75")
-		draw_rect(Rect2(pos+Vector2(3,3),Vector2(34,34)),Color("394e50"))
-		draw_rect(Rect2(pos+Vector2(3,3),Vector2(34,34)),color,false,2)
-		var direction := Vector2.LEFT if tile.x == 0 else Vector2.RIGHT if tile.x == 17 else Vector2.UP if tile.y == 0 else Vector2.DOWN
+		canvas.draw_rect(Rect2(pos+Vector2(3,3),Vector2(34,34)),Color("394e50"))
+		canvas.draw_rect(Rect2(pos+Vector2(3,3),Vector2(34,34)),color,false,2)
+		var direction := Vector2.LEFT if tile.x == 0 else Vector2.RIGHT if tile.x == map_size().x-1 else Vector2.UP if tile.y == 0 else Vector2.DOWN
 		var center := pos+Vector2(20,20)
-		draw_line(center-direction*10,center+direction*10,color,3)
-		draw_line(center+direction*10,center+direction*3+Vector2(-direction.y,direction.x)*6,color,3)
-		draw_line(center+direction*10,center+direction*3-Vector2(-direction.y,direction.x)*6,color,3)
+		canvas.draw_line(center-direction*10,center+direction*10,color,3)
+		canvas.draw_line(center+direction*10,center+direction*3+Vector2(-direction.y,direction.x)*6,color,3)
+		canvas.draw_line(center+direction*10,center+direction*3-Vector2(-direction.y,direction.x)*6,color,3)
 		var name := str(AREAS[int(destination/3)][destination%3])+("" if unlocked else " · 锁定")
-		var label := pos+Vector2(4,51) if tile.x == 0 else pos+Vector2(-140,24) if tile.x == 17 else pos+Vector2(43,24)
-		draw_rect(Rect2(label+Vector2(-4,-18),Vector2(mini(138,name.length()*12+8),25)),Color(0.08,0.15,0.19,0.88))
-		draw_string(font,label,name,HORIZONTAL_ALIGNMENT_LEFT,134,12,color)
-	draw_string(font,Vector2(43,605),str(Layout.FEATURES[zone*3+area])+"   /   金色箭头：步行出口   ·   M：地图",HORIZONTAL_ALIGNMENT_LEFT,718,13,Color("b6c9bf"))
+		var label := pos+Vector2(4,51) if tile.x == 0 else pos+Vector2(-140,24) if tile.x == map_size().x-1 else pos+Vector2(43,24)
+		canvas.draw_rect(Rect2(label+Vector2(-4,-18),Vector2(mini(138,name.length()*12+8),25)),Color(0.08,0.15,0.19,0.88))
+		canvas.draw_string(font,label,name,HORIZONTAL_ALIGNMENT_LEFT,134,12,color)
 
 func show_companion_skills(storage: bool, index: int) -> void:
 	if mode != "explore": return
@@ -2038,18 +2110,18 @@ func claim_survey_report() -> void:
 	open_modal("阿岚 · 调查报告已归档",str(Surveys.REPORTS[zone])+"\n\n奖励：3 枚胶囊、出战伙伴训练经验 +2。每地报告只能交付一次。")
 	modal_button("继续探索",close_modal)
 
-func draw_survey_marker() -> void:
+func draw_survey_marker(canvas: CanvasItem) -> void:
 	var index := zone*3+area
 	var recorded := bool(story_flags.get(Surveys.key(index),false))
 	var pos: Vector2 = ORIGIN+Vector2(Surveys.POINTS[index].tile)*TILE+Vector2(20,20)
 	var color := Color("8da9a0") if recorded else Color("f2d089")
 	var lift := 0.0 if reduce_motion or recorded else sin(walk_time*3)*3
-	draw_circle(pos+Vector2(0,9),12,Color(0.08,0.16,0.18,0.6))
-	draw_rect(Rect2(pos+Vector2(-9,-14+lift),Vector2(18,24)),color)
-	for y in range(3): draw_line(pos+Vector2(-5,-8+y*5+lift),pos+Vector2(5,-8+y*5+lift),Color("425854"),1)
-	if not recorded: draw_arc(pos,18,0,TAU,24,Color(0.95,0.82,0.51,0.5),1)
+	canvas.draw_circle(pos+Vector2(0,9),12,Color(0.08,0.16,0.18,0.6))
+	canvas.draw_rect(Rect2(pos+Vector2(-9,-14+lift),Vector2(18,24)),color)
+	for y in range(3): canvas.draw_line(pos+Vector2(-5,-8+y*5+lift),pos+Vector2(5,-8+y*5+lift),Color("425854"),1)
+	if not recorded: canvas.draw_arc(pos,18,0,TAU,24,Color(0.95,0.82,0.51,0.5),1)
 	var font: Font = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
-	draw_string(font,pos+Vector2(-17,-24),"已记" if recorded else "调查",HORIZONTAL_ALIGNMENT_LEFT,-1,13,color)
+	canvas.draw_string(font,pos+Vector2(-17,-24),"已记" if recorded else "调查",HORIZONTAL_ALIGNMENT_LEFT,-1,13,color)
 
 func show_battle_report() -> void:
 	if mode != "explore" or last_battle_report.is_empty(): return
@@ -2101,3 +2173,25 @@ func show_battle_report() -> void:
 	modal_button("继续探索",close_modal)
 	modal_button("整理队伍与成长",show_backpack)
 	modal_button("查看下一步任务",show_quest_journal)
+
+func inspect_expedition_cache() -> void:
+	if mode != "explore" or busy or player.distance_to(Layout.cache_tile(zone,area)) > 1: return
+	var key := "expedition_%d" % (zone*3+area)
+	if not story_flags.get(key,false):
+		story_flags[key] = true
+		if tracked_goal == "expedition": tracked_goal = "main"
+		seals = mini(9999,seals+3)
+		Growth.gain(party[active],1)
+		audio.sfx("bell")
+		save_game(false)
+		refresh()
+	open_modal(str(Layout.LANDMARKS[zone*3+area])+" · 远行补给", "巡查员把补给留在远路尽头，供前来调查的训练师使用。\n\n本区域首次探索奖励：胶囊 +3、出战伙伴经验 +1（已领取）。\n这是一条可选支路，不影响地区资格、父母救援和冠军赛。")
+	modal_button("查看全区地图",show_local_map)
+	modal_button("继续探索",close_modal)
+
+func draw_expedition_cache(canvas: CanvasItem) -> void:
+	var found := bool(story_flags.get("expedition_%d" % (zone*3+area),false))
+	var pos := ORIGIN+Vector2(Layout.cache_tile(zone,area))*TILE+Vector2(20,20)
+	WorldArt.draw_object(canvas,7,pos+Vector2(0,19),Vector2(35,42),Color("9aa9a1") if found else Color.WHITE)
+	var font: Font = preload("res://assets/fonts/NotoSansCJK-Regular.ttc")
+	canvas.draw_string(font,pos+Vector2(-20,-25),"已取" if found else "补给",HORIZONTAL_ALIGNMENT_LEFT,-1,13,Color("cad5bc") if found else Color("ffe19c"))

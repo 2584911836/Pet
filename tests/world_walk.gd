@@ -43,9 +43,10 @@ func run() -> void:
 	game.new_game()
 	game.close_modal()
 	game.visit_region(0,2)
-	walk_to(Vector2i(16,5))
+	var locked_exit: Vector2i = game.region_exit_tile(3)
+	walk_to(locked_exit+Vector2i.LEFT)
 	game.move_player(Vector2i.RIGHT)
-	check(game.zone == 0 and game.area == 2 and game.player == Vector2i(16,5),"locked border blocks walking")
+	check(game.zone == 0 and game.area == 2 and game.player == locked_exit+Vector2i.LEFT,"locked border blocks walking")
 	game.completed = [true,false,false]
 	game.visit_region(0,0)
 	game.update_guide()

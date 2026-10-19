@@ -31,7 +31,7 @@ func abort(text: String) -> void:
 	printerr("JOURNEY FAIL: "+text)
 
 func timed_out() -> bool:
-	return Time.get_ticks_msec()-started > 180000 or encounters > 500
+	return Time.get_ticks_msec()-started > 330000 or encounters > 500
 
 func click(fragment: String) -> bool:
 	var scope = game.modal if game.modal != null else game.buttons
@@ -148,11 +148,18 @@ func camp() -> void:
 
 func region(island: int, area: int) -> void:
 	await close_story()
-	if not await click("世界地图"): return
-	await process_frame
-	if not await click(str(game.ISLANDS[island].name)+" · "+str(game.AREAS[island][area])): return
-	await process_frame
-	if game.zone != island or game.area != area: abort("map visit failed")
+	var target := island*3+area
+	while game.zone*3+game.area != target and not failed:
+		var next: int = game.next_region_toward(target)
+		if next < 0: abort("no unlocked regional road"); return
+		var gate: Vector2i = game.region_exit_tile(next)
+		var bounds: Vector2i = game.map_size()
+		var inward := Vector2i.RIGHT if gate.x == 0 else Vector2i.LEFT if gate.x == bounds.x-1 else Vector2i.DOWN if gate.y == 0 else Vector2i.UP
+		await walk_to(gate+inward)
+		if failed: return
+		await walk_step(gate)
+		if game.zone*3+game.area != next: abort("physical region crossing failed"); return
+		await process_frame
 
 func gather_current_pool() -> void:
 	var steps := 0
